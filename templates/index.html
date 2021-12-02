@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+  <!-- Bootstrap ICONS [Hide Show Cloud Icons , Remove below code whenever want to remove icon]-->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css"
+    integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+
+  <!-- Socket IO Connection-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+    integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+    crossorigin="anonymous"></script>
+  <title>Home</title>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+
+    <a class="navbar-brand" href="#">
+      <i class="fas fa-cloud"></i>
+      XCS ALGO TRADING
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="/">Home </a>
+        </li>
+        <li class="nav-item ">
+          <a class="nav-link" href="/settings">Settings <span class="sr-only">(current)</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <br>
+  <div class="container">
+    <div class="row">
+      <div class="card" style="width: 100%;">
+
+        <div class="card-header">
+          <div class="text-center">
+            Welcome to Commodities Algo
+          </div>
+
+          <div class="text-right">
+            <select id="commodities_selection" class="form-select" aria-label="Default select example"
+              onchange="selectCommodities()">
+              <option selected>Choose Commodities</option>
+              <option value="1">Gold</option>
+              <option value="2">Silver</option>
+              <option value="3">Natural Gas</option>
+              <option value="4">Lead</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="container-fluid text-right">
+            <div class="row">
+              <div class="col-4 m-auto text-right">
+              </div>
+              <div class="col-4 m-auto text-right">
+                <button type="button" id="start" class="btn btn-outline-success btn-sm" onclick="startScript()">Start
+                  Script</button>
+              </div>
+              <div class="col-4 m-auto text-left">
+                <button type="button" id="stop" class="btn btn-outline-danger btn-sm" onclick="stopScript()">Stop
+                  Script</button>
+              </div>
+            </div>
+          </div>
+
+          <br>
+          <div class="container">
+            <div class="row">
+              <div class="col-12">
+                <label id="log_report_label" for="log_report" class="form-label">Trading Report</label>
+                <textarea class="form-control" id="log_report" rows="10" style="min-width: 100%"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+
+
+
+
+  <script>
+    var socket = io();
+
+    const startScript = function () {
+      const commodities_selection = document.getElementById("commodities_selection");
+      const selectedOption = parseInt(commodities_selection.value);
+      switch (selectedOption) {
+        case 1:
+          //Gold
+          socket.emit('start_script', { 'startScriptFor': 1 });
+          break;
+
+        case 2:
+          //Silver
+          socket.emit('start_script', { 'startScriptFor': 2 });
+          break;
+
+        case 3:
+          //Natural Gas
+          socket.emit('start_script', { 'startScriptFor': 3 });
+          break;
+
+        case 4:
+          //Lead
+          socket.emit('start_script', { 'startScriptFor': 4 });
+          break;
+
+        default:
+          alert('Please select any commodities to proceed further.');
+          break;
+
+      }
+
+    }
+
+    const stopScript = function () {
+      const commodities_selection = document.getElementById("commodities_selection");
+      const selectedOption = parseInt(commodities_selection.value);
+      switch (selectedOption) {
+        case 1:
+          //Gold
+          socket.emit('stop_script', { 'stopScriptFor': 1 });
+          break;
+
+        case 2:
+          //Silver
+          socket.emit('stop_script', { 'stopScriptFor': 2 });
+          break;
+
+        case 3:
+          //Natural Gas
+          socket.emit('stop_script', { 'stopScriptFor': 3 });
+          break;
+
+        case 4:
+          //Lead
+          socket.emit('stop_script', { 'stopScriptFor': 4 });
+          break;
+
+        default:
+          alert('Please select any commodities to proceed further.');
+          break;
+      }
+    }
+
+    socket.on('force_stop_script', (selectedCommodities) => {
+
+      const selectedOption = parseInt(selectedCommodities);
+      switch (selectedOption) {
+        case 1:
+          //Gold
+          socket.emit('stop_script', { 'stopScriptFor': 1 });
+          break;
+
+        case 2:
+          //Silver
+          socket.emit('stop_script', { 'stopScriptFor': 2 });
+          break;
+
+        case 3:
+          //Natural Gas
+          socket.emit('stop_script', { 'stopScriptFor': 3 });
+          break;
+
+        case 4:
+          //Lead
+          socket.emit('stop_script', { 'stopScriptFor': 4 });
+          break;
+
+        default:
+          alert('Please select any commodities to proceed further.');
+          break;
+      }
+
+    });
+
+    socket.on('log_report', (logMessage) => {
+
+      var logJson = JSON.parse(JSON.stringify(logMessage));
+      var log_message = logJson.logReport;
+      var selected_commodities = logJson.selected_commodities;
+
+      if (isEmpty(log_message)) {
+        var stopBtn = document.getElementById('stop');
+        stopBtn.disabled = true;
+        var startBtn = document.getElementById('start')
+        startBtn.disabled = false;
+
+      } else {
+        var startBtn = document.getElementById('start')
+        startBtn.disabled = true;
+        var stopBtn = document.getElementById('stop');
+        stopBtn.disabled = false;
+      }
+
+      const log_report_label = document.getElementById("log_report_label");
+      const commodities_selection = document.getElementById("commodities_selection");
+      const selectedOption = commodities_selection.value;
+
+      const textarea = document.getElementById('log_report');
+
+      switch (parseInt(selectedOption)) {
+        case 1:
+          if (parseInt(selected_commodities) == 1) {
+            console.log(log_message);
+            textarea.value = log_message;
+          } else {
+            textarea.value = "";
+          }
+
+          break;
+
+        case 2:
+          if (parseInt(selected_commodities) == 2) {
+            console.log(log_message);
+            textarea.value = log_message;
+          } else {
+            textarea.value = "";
+          }
+          break;
+
+        case 3:
+          if (parseInt(selected_commodities) == 3) {
+            console.log(log_message);
+            textarea.value = log_message;
+          } else {
+            textarea.value = "";
+          }
+
+          break;
+
+        case 4:
+          if (parseInt(selected_commodities) == 4) {
+            console.log(log_message);
+            textarea.value = log_message;
+          } else {
+            textarea.value = "";
+          }
+
+          break;
+
+        default:
+          textarea.value = "";
+          break;
+      }
+
+
+    });
+
+    function isEmpty(str) {
+      return (!str || str.length === 0);
+    }
+
+    const selectCommodities = function () {
+
+      const log_report_label = document.getElementById("log_report_label");
+      const commodities_selection = document.getElementById("commodities_selection");
+      const selectedOption = commodities_selection.value;
+      var selectedCommodities = -1;
+      switch (parseInt(selectedOption)) {
+        case 1:
+          //Gold
+          console.log('Gold Selected');
+          log_report_label.innerHTML = "Trading Report 'Gold'";
+          selectedCommodities = 1;
+          socket.emit('commodities_change', { selected_commodities: `${selectedCommodities}` });
+          break;
+
+        case 2:
+          //Silver
+          console.log('Silver Selected');
+          log_report_label.innerHTML = "Trading Report 'Silver'";
+          selectedCommodities = 2;
+          socket.emit('commodities_change', { selected_commodities: `${selectedCommodities}` });
+          break;
+
+        case 3:
+          //Natural Gas
+          console.log('Natural Gas Selected');
+          log_report_label.innerHTML = "Trading Report 'Natural Gas'";
+          selectedCommodities = 3;
+          socket.emit('commodities_change', { selected_commodities: `${selectedCommodities}` });
+          break;
+
+        case 4:
+          //Lead
+          console.log('Lead Selected');
+          log_report_label.innerHTML = "Trading Report 'Lead'";
+          selectedCommodities = 4;
+          socket.emit('commodities_change', { selected_commodities: `${selectedCommodities}` });
+          break;
+
+        default:
+          console.log('Default Selected');
+          log_report_label.innerHTML = "Trading Report";
+          selectedCommodities = -1;
+          socket.emit('commodities_change', { selected_commodities: `${selectedCommodities}` });
+          break;
+      }
+    }
+
+    // window.addEventListener('beforeunload', function (e) {
+
+    //   var confirmClose = confirm('Close?');
+    //   console.log(confirmClose);
+    //   // socket.emit('browser_closed', { is_browser_closed: true });
+
+    //   e.preventDefault();
+    //   e.returnValue = '';
+    // });
+
+
+
+  </script>
+
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous">
+    </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous">
+    </script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
+    </script>
+</body>
+
+</html>
