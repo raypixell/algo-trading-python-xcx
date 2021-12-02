@@ -306,4 +306,4 @@ def commodities_change(data):
             print(ex)    
 
 if __name__ == '__main__':
-    socketio.run(app,port=1000)
+    socketio.run(app)
