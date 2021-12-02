@@ -7,7 +7,9 @@ from commodities_silver import SilverCommodities
 from commodities_natural_gas import NaturalGasCommodities
 from commodities_lead import LeadCommodities
 
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(daemon=True)
+scheduler.start()
+
 gold_job = None
 silver_job = None
 natural_gas_job = None
@@ -47,36 +49,29 @@ def start_script(data):
         goldCommodities.loginKite()
 
         global gold_job
-
         gold_job = scheduler.add_job(goldCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='gold')
-        scheduler.start()
+
     elif selectedCommodities == 2:
         silverCommodities = SilverCommodities(socketio)
         silverCommodities.loginKite()
 
         global silver_job
-
         silver_job = scheduler.add_job(silverCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='silver')
-        scheduler.start()
-
 
     elif selectedCommodities == 3:
         naturalGasCommodities = NaturalGasCommodities(socketio)
         naturalGasCommodities.loginKite()
 
         global natural_gas_job
-
         natural_gas_job = scheduler.add_job(naturalGasCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='naturalgas')
-        scheduler.start()
+
     elif selectedCommodities == 4:
         leadCommodities = LeadCommodities(socketio)
         leadCommodities.loginKite()
 
         global lead_job
-
         lead_job = scheduler.add_job(leadCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='lead')
-        scheduler.start()
-    
+        
 
 @socketio.on('stop_script')
 def stop_script(data):
