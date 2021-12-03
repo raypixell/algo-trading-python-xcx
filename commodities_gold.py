@@ -5,6 +5,8 @@ import pandas_ta as ta
 from tapy import Indicators
 import time
 import json
+import logging
+
 
 
 
@@ -33,6 +35,7 @@ class GoldCommodities:
     socketio = None
     kite = None
 
+    file_name = None
 
 
     def __init__(self,socketio):
@@ -47,6 +50,17 @@ class GoldCommodities:
         self.api_key='9fua69n6l7whujs5'
 
         # Log file name
+        now = datetime.now()
+        self.file_name = "gold_" + '%s-%s-%s.log' % (now.day,now.month,now.year)
+        print(self.file_name)
+
+        logger = logging.getLogger()
+        fhandler = logging.FileHandler(filename=self.file_name, mode='a')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fhandler.setFormatter(formatter)
+        logger.addHandler(fhandler)
+        logger.setLevel(logging.DEBUG)
+
         self.LOG_FILE_NAME = 'commodities_log_gold.xlsx'
         self.REPORT_FILE_NAME = 'commodities_gold.xlsx'
         self.SCRIPT_COMMENT = 'Please wait while checking " GOLD " commodities...'
@@ -78,6 +92,7 @@ class GoldCommodities:
         with open("gold_log_report.json", "w") as outfile:
             json.dump(logData, outfile)
             
+        logging.info(self.logMessage)
         self.socketio.emit('log_report',logData)
 
     def startCommoditiesAlgo(self):
