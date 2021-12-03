@@ -7,7 +7,7 @@ from commodities_silver import SilverCommodities
 from commodities_natural_gas import NaturalGasCommodities
 from commodities_lead import LeadCommodities
 
-scheduler = BackgroundScheduler(daemon=True,timezone=utc)
+scheduler = BackgroundScheduler()
 scheduler.start()
 
 gold_job = None
