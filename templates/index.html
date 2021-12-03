@@ -106,6 +106,10 @@
   <script>
     var socket = io();
 
+    socket.on('connect', function() {
+        socket.emit('connected', {data: 'I\'m connected!'});
+    });
+
     const startScript = function () {
       const commodities_selection = document.getElementById("commodities_selection");
       const selectedOption = parseInt(commodities_selection.value);

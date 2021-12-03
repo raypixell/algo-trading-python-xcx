@@ -7,7 +7,7 @@ from commodities_silver import SilverCommodities
 from commodities_natural_gas import NaturalGasCommodities
 from commodities_lead import LeadCommodities
 
-scheduler = BackgroundScheduler(daemon=True)
+scheduler = BackgroundScheduler(daemon=True,timezone=utc)
 scheduler.start()
 
 gold_job = None
@@ -37,7 +37,11 @@ def settings():
         return 'POST METHOD EXECUTED'
     elif request.method == 'GET':
         return render_template('settings.html')
-
+        
+@socketio.on('connected')
+def onConnected(data):
+    print(str(data))
+    print(request.sid)
 
 @socketio.on('start_script')
 def start_script(data):
