@@ -6,6 +6,7 @@ from tapy import Indicators
 import time
 import json
 import logging
+import os
 
 
 
@@ -35,7 +36,7 @@ class GoldCommodities:
     socketio = None
     kite = None
 
-    file_name = None
+    DOWNLOAD_LOG_FILE_NAME = None
 
 
     def __init__(self,socketio):
@@ -51,15 +52,15 @@ class GoldCommodities:
 
         # Log file name
         now = datetime.now()
-        self.file_name = "gold_" + '%s-%s-%s.log' % (now.day,now.month,now.year)
-        print(self.file_name)
+        self.DOWNLOAD_LOG_FILE_NAME = "gold_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
+        print(self.DOWNLOAD_LOG_FILE_NAME)
 
-        logger = logging.getLogger()
-        fhandler = logging.FileHandler(filename=self.file_name, mode='a')
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        fhandler.setFormatter(formatter)
-        logger.addHandler(fhandler)
-        logger.setLevel(logging.DEBUG)
+        # logger = logging.getLogger()
+        # fhandler = logging.FileHandler(filename=self.file_name, mode='a')
+        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        # fhandler.setFormatter(formatter)
+        # logger.addHandler(fhandler)
+        # logger.setLevel(logging.DEBUG)
 
         self.LOG_FILE_NAME = 'commodities_log_gold.xlsx'
         self.REPORT_FILE_NAME = 'commodities_gold.xlsx'
@@ -86,14 +87,7 @@ class GoldCommodities:
         self.kite = KiteConnect(api_key=self.api_key,timeout=20)
         self.kite.set_access_token(self.access_token)
         self.logMessage = 'Successfully logged in Kite API!'
-        logData = {"logReport" : self.logMessage,"selected_commodities":1}
-
-        # write logReport to json file
-        with open("gold_log_report.json", "w") as outfile:
-            json.dump(logData, outfile)
-            
-        logging.info(self.logMessage)
-        self.socketio.emit('log_report',logData)
+        self.sendLogReport(self.logMessage)
 
     def startCommoditiesAlgo(self):
         try:
@@ -192,7 +186,23 @@ class GoldCommodities:
                 if ((secondLastCandleOpen < secondLastAligatorJaw) and (secondLastCandleClose > secondLastAligatorJaw)) and (lastCandleClose >= secondLastCandleHigh):
                     isTraded = True
 
-                    logString = '***************************' +'\n'+'TRADINGSYMBOL : '+str(tokens[token])+'\n'+'***************************'+'\n'+'BUY SIGNAL : '+'\n'+'CLOSE PRICE : ' + str(lastCandle['close'])+'\n'+'STOP LOSS : ' + str(lastCandle['low'])
+                    logString = '***************************'
+                    self.sendLogReport(logString)
+                    logString ='TRADINGSYMBOL : '
+                    self.sendLogReport(logString)
+                    logString = str(tokens[token])
+                    self.sendLogReport(logString)
+                    logString ='***************************'
+                    self.sendLogReport(logString)
+                    logString ='BUY SIGNAL : '
+                    self.sendLogReport(logString)
+                    logString ='CLOSE PRICE : '
+                    self.sendLogReport(logString)
+                    logString = str(lastCandle['close'])
+                    self.sendLogReport(logString)
+                    logString ='STOP LOSS : '
+                    self.sendLogReport(logString) 
+                    logString = str(lastCandle['low'])
                     self.sendLogReport(logString)
 
                     # generating log
@@ -232,7 +242,23 @@ class GoldCommodities:
                 if ((secondLastCandleOpen > secondLastAligatorJaw) and (secondLastCandleClose < secondLastAligatorJaw)) and (lastCandleClose <= secondLastCandleLow):
                     isTraded = True
 
-                    logString = '***************************' +'\n'+'TRADINGSYMBOL : '+str(tokens[token])+'\n'+'***************************'+'\n'+'SELL SIGNAL : '+'\n'+'CLOSE PRICE : ' + str(lastCandle['close'])+'\n'+'STOP LOSS : ' + str(lastCandle['high'])
+                    logString = '***************************'
+                    self.sendLogReport(logString)
+                    logString ='TRADINGSYMBOL : '
+                    self.sendLogReport(logString)
+                    logString = str(tokens[token])
+                    self.sendLogReport(logString)
+                    logString ='***************************'
+                    self.sendLogReport(logString)
+                    logString ='SELL SIGNAL : '
+                    self.sendLogReport(logString)
+                    logString ='CLOSE PRICE : '
+                    self.sendLogReport(logString)
+                    logString = str(lastCandle['close'])
+                    self.sendLogReport(logString)
+                    logString ='STOP LOSS : '
+                    self.sendLogReport(logString) 
+                    logString =str(lastCandle['high'])
                     self.sendLogReport(logString)
 
                     # generating log
@@ -255,29 +281,37 @@ class GoldCommodities:
             time.sleep(1)
     
         if not isTraded:
-            logString = 'No trade this session...' +'\n'+'--------End-----------'
+            logString = 'No trade this session...'
+            self.sendLogReport(logString)
+            logString = '--------End-----------'
             self.sendLogReport(logString)
         else:
             logString = '----------------------------------'
             self.sendLogReport(logString)
 
     def sendLogReport(self,logString):
-        with open('gold_log_report.json', 'r') as openfile:
-            logReportObj = json.load(openfile)
-            self.logReport = logReportObj['logReport']
-
-        if len(self.logReport) == 0:
-            self.logMessage = logString
+        # write logReport to txt file
+        f=open(self.DOWNLOAD_LOG_FILE_NAME, "a+")
+        filesize = os.path.getsize(self.DOWNLOAD_LOG_FILE_NAME)
+        if filesize == 0:
+            f.write(logString)
         else:
-            self.logMessage = self.logReport + "\n" + logString
+            f.write('\n'+logString)
+        
+        # close file stream
+        f.close()
 
-        logData = {"logReport" : self.logMessage,"selected_commodities":1}
+        # read the txt file and get content
+        f=open(self.DOWNLOAD_LOG_FILE_NAME, "r")
+        if f.mode == 'r':
+            self.logReport =f.read()
+        
+        # close file stream
+        f.close()
 
-        # write logReport to json file
-        with open("gold_log_report.json", "w") as outfile:
-            json.dump(logData, outfile)
+        logData = {"logReport" : self.logReport,"selected_commodities":1}
 
-        print(self.logMessage)
+        print(self.logReport)
         self.socketio.emit('log_report',logData)
 
 

@@ -33,6 +33,7 @@ class NaturalGasCommodities:
     socketio = None
     kite = None
 
+    DOWNLOAD_LOG_FILE_NAME = None
 
     def __init__(self,socketio):
 
@@ -44,6 +45,11 @@ class NaturalGasCommodities:
             self.access_token = accessTokenObj['access_token']
 
         self.api_key='9fua69n6l7whujs5'
+
+        # Log file name
+        now = datetime.now()
+        self.DOWNLOAD_LOG_FILE_NAME = "natural_gas_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
+        print(self.DOWNLOAD_LOG_FILE_NAME)
 
         # Log file name
         self.LOG_FILE_NAME = 'commodities_log_natural_gas.xlsx'
@@ -72,13 +78,7 @@ class NaturalGasCommodities:
         self.kite.set_access_token(self.access_token)
 
         self.logMessage = 'Successfully logged in Kite API!'
-        logData = {"logReport" : self.logMessage,"selected_commodities":3}
-
-        # write logReport to json file
-        with open("natural_gas_log_report.json", "w") as outfile:
-            json.dump(logData, outfile)
-            
-        self.socketio.emit('log_report',logData)
+        self.sendLogReport(self.logMessage)
 
     def startCommoditiesAlgo(self):
         try:
@@ -177,7 +177,23 @@ class NaturalGasCommodities:
                 if ((secondLastCandleOpen < secondLastAligatorJaw) and (secondLastCandleClose > secondLastAligatorJaw)) and (lastCandleClose >= secondLastCandleHigh):
                     isTraded = True
 
-                    logString = '***************************' +'\n'+'TRADINGSYMBOL : '+str(tokens[token])+'\n'+'***************************'+'\n'+'BUY SIGNAL : '+'\n'+'CLOSE PRICE : ' + str(lastCandle['close'])+'\n'+'STOP LOSS : ' + str(lastCandle['low'])
+                    logString = '***************************'
+                    self.sendLogReport(logString)
+                    logString ='TRADINGSYMBOL : '
+                    self.sendLogReport(logString)
+                    logString = str(tokens[token])
+                    self.sendLogReport(logString)
+                    logString ='***************************'
+                    self.sendLogReport(logString)
+                    logString ='BUY SIGNAL : '
+                    self.sendLogReport(logString)
+                    logString ='CLOSE PRICE : '
+                    self.sendLogReport(logString)
+                    logString = str(lastCandle['close'])
+                    self.sendLogReport(logString)
+                    logString ='STOP LOSS : '
+                    self.sendLogReport(logString) 
+                    logString = str(lastCandle['low'])
                     self.sendLogReport(logString)
 
                     # generating log
@@ -217,7 +233,23 @@ class NaturalGasCommodities:
                 if ((secondLastCandleOpen > secondLastAligatorJaw) and (secondLastCandleClose < secondLastAligatorJaw)) and (lastCandleClose <= secondLastCandleLow):
                     isTraded = True
 
-                    logString = '***************************' +'\n'+'TRADINGSYMBOL : '+str(tokens[token])+'\n'+'***************************'+'\n'+'SELL SIGNAL : '+'\n'+'CLOSE PRICE : ' + str(lastCandle['close'])+'\n'+'STOP LOSS : ' + str(lastCandle['high'])
+                    logString = '***************************'
+                    self.sendLogReport(logString)
+                    logString ='TRADINGSYMBOL : '
+                    self.sendLogReport(logString)
+                    logString = str(tokens[token])
+                    self.sendLogReport(logString)
+                    logString ='***************************'
+                    self.sendLogReport(logString)
+                    logString ='SELL SIGNAL : '
+                    self.sendLogReport(logString)
+                    logString ='CLOSE PRICE : '
+                    self.sendLogReport(logString)
+                    logString = str(lastCandle['close'])
+                    self.sendLogReport(logString)
+                    logString ='STOP LOSS : '
+                    self.sendLogReport(logString) 
+                    logString =str(lastCandle['high'])
                     self.sendLogReport(logString)
 
                     # generating log
@@ -240,29 +272,37 @@ class NaturalGasCommodities:
             time.sleep(1)
     
         if not isTraded:
-            logString = 'No trade this session...' +'\n'+'--------End-----------'
+            logString = 'No trade this session...'
+            self.sendLogReport(logString)
+            logString = '--------End-----------'
             self.sendLogReport(logString)
         else:
             logString = '----------------------------------'
             self.sendLogReport(logString)
 
     def sendLogReport(self,logString):
-        with open('natural_gas_log_report.json', 'r') as openfile:
-            logReportObj = json.load(openfile)
-            self.logReport = logReportObj['logReport']
-
-        if len(self.logReport) == 0:
-            self.logMessage = logString
+        # write logReport to txt file
+        f=open(self.DOWNLOAD_LOG_FILE_NAME, "a+")
+        filesize = os.path.getsize(self.DOWNLOAD_LOG_FILE_NAME)
+        if filesize == 0:
+            f.write(logString)
         else:
-            self.logMessage = self.logReport + "\n" + logString
+            f.write('\n'+logString)
+        
+        # close file stream
+        f.close()
 
-        logData = {"logReport" : self.logMessage,"selected_commodities":3}
+        # read the txt file and get content
+        f=open(self.DOWNLOAD_LOG_FILE_NAME, "r")
+        if f.mode == 'r':
+            self.logReport =f.read()
+        
+        # close file stream
+        f.close()
 
-        # write logReport to json file
-        with open("natural_gas_log_report.json", "w") as outfile:
-            json.dump(logData, outfile)
+        logData = {"logReport" : self.logReport,"selected_commodities":3}
 
-        print(self.logMessage)
+        print(self.logReport)
         self.socketio.emit('log_report',logData)
                 
 

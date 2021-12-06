@@ -54,7 +54,8 @@
           <div class="text-center">
             <blockquote class="blockquote mb-0">
               <p>Welcome to Commodities Algo</p>
-              <footer class="blockquote-footer"><cite title="Source Title">This algo is based on Supertrend and Alligator Jaw</cite></footer>
+              <footer class="blockquote-footer"><cite title="Source Title">This algo is based on Supertrend and
+                  Alligator Jaw</cite></footer>
             </blockquote>
           </div>
           <br>
@@ -133,7 +134,8 @@
 
               </div>
               <div class="col-2 m-auto text-right">
-                <button type="button" id="download" class="btn btn-outline-success btn-sm" onclick="downloadLog()">Download
+                <button type="button" id="download" class="btn btn-outline-success btn-sm"
+                  onclick="downloadLog()">Download
                   Log</button>
               </div>
             </div>
@@ -249,34 +251,85 @@
 
     });
 
+    socket.on('update_btn_state', (data) => {
+      var btnStateJson = JSON.parse(JSON.stringify(data));
+      const commodities_selection = document.getElementById("commodities_selection");
+      const selectedOption = parseInt(commodities_selection.value);
+      switch (selectedOption) {
+        case 1:
+          var golde_btn_state = btnStateJson.Gold;
+          var startBtn = document.getElementById('start')
+          var stopBtn = document.getElementById('stop');
+
+          if(golde_btn_state){
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+          }else{
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+          }
+          break;
+
+        case 2:
+          var silver_btn_state = btnStateJson.Silver;
+          var startBtn = document.getElementById('start')
+          var stopBtn = document.getElementById('stop');
+
+          if(silver_btn_state){
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+          }else{
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+          }
+          break;
+
+        case 3:
+          var natural_gas_btn_state = btnStateJson.NaturalGas;
+          var startBtn = document.getElementById('start')
+          var stopBtn = document.getElementById('stop');
+
+          if(natural_gas_btn_state){
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+          }else{
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+          }
+          break;
+
+        case 4:
+          var lead_btn_state = btnStateJson.Lead;
+          var startBtn = document.getElementById('start')
+          var stopBtn = document.getElementById('stop');
+
+          if(lead_btn_state){
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+          }else{
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+          }
+          break;
+
+      }
+    });
+
     socket.on('log_report', (logMessage) => {
 
       var logJson = JSON.parse(JSON.stringify(logMessage));
       var log_message = logJson.logReport;
-      var selected_commodities = logJson.selected_commodities;
-
-      if (isEmpty(log_message)) {
-        var stopBtn = document.getElementById('stop');
-        stopBtn.disabled = true;
-        var startBtn = document.getElementById('start')
-        startBtn.disabled = false;
-
-      } else {
-        var startBtn = document.getElementById('start')
-        startBtn.disabled = true;
-        var stopBtn = document.getElementById('stop');
-        stopBtn.disabled = false;
-      }
+      var selected_commodities = parseInt(logJson.selected_commodities);
 
       const log_report_label = document.getElementById("log_report_label");
       const commodities_selection = document.getElementById("commodities_selection");
-      const selectedOption = commodities_selection.value;
+      const selectedOption = parseInt(commodities_selection.value);
 
       const textarea = document.getElementById('log_report');
 
-      switch (parseInt(selectedOption)) {
+      switch (selectedOption) {
         case 1:
-          if (parseInt(selected_commodities) == 1) {
+          if (selected_commodities == 1) {
             console.log(log_message);
             textarea.value = log_message;
           } else {
@@ -286,7 +339,7 @@
           break;
 
         case 2:
-          if (parseInt(selected_commodities) == 2) {
+          if (selected_commodities == 2) {
             console.log(log_message);
             textarea.value = log_message;
           } else {
@@ -295,8 +348,7 @@
           break;
 
         case 3:
-          if (parseInt(selected_commodities) == 3) {
-            console.log(log_message);
+          if (selected_commodities == 3) {
             textarea.value = log_message;
           } else {
             textarea.value = "";
@@ -305,8 +357,7 @@
           break;
 
         case 4:
-          if (parseInt(selected_commodities) == 4) {
-            console.log(log_message);
+          if (selected_commodities == 4) {
             textarea.value = log_message;
           } else {
             textarea.value = "";
@@ -368,22 +419,46 @@
         default:
           console.log('Default Selected');
           log_report_label.innerHTML = "Trading Report";
-          selectedCommodities = -1;
-          socket.emit('commodities_change', { selected_commodities: `${selectedCommodities}` });
           break;
       }
     }
 
-    // window.addEventListener('beforeunload', function (e) {
+    const downloadLog = function () {
+      const log_report_label = document.getElementById("log_report_label");
+      const commodities_selection = document.getElementById("commodities_selection");
+      const selectedOption = commodities_selection.value;
+      var selectedCommodities = -1;
+      switch (parseInt(selectedOption)) {
+        case 1:
+          //Gold
+          selectedCommodities = 1;
+          socket.emit('download_log', { selected_commodities: `${selectedCommodities}` });
+          break;
 
-    //   var confirmClose = confirm('Close?');
-    //   console.log(confirmClose);
-    //   // socket.emit('browser_closed', { is_browser_closed: true });
+        case 2:
+          //Silver
+          selectedCommodities = 2;
+          socket.emit('download_log', { selected_commodities: `${selectedCommodities}` });
+          break;
 
-    //   e.preventDefault();
-    //   e.returnValue = '';
-    // });
+        case 3:
+          //Natural Gas
+          selectedCommodities = 3;
+          socket.emit('download_log', { selected_commodities: `${selectedCommodities}` });
+          break;
 
+        case 4:
+          //Lead
+          selectedCommodities = 4;
+          socket.emit('download_log', { selected_commodities: `${selectedCommodities}` });
+          break;
+
+        default:
+          alert('Please select any commodities to proceed further.');
+          break;
+
+      }
+    }
 
 
   </script>
