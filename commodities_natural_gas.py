@@ -5,6 +5,8 @@ import pandas_ta as ta
 from tapy import Indicators
 import time
 import json
+import logging
+import os
 
 
 

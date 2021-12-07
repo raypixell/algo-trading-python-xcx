@@ -134,9 +134,11 @@
 
               </div>
               <div class="col-2 m-auto text-right">
-                <button type="button" id="download" class="btn btn-outline-success btn-sm"
-                  onclick="downloadLog()">Download
-                  Log</button>
+
+
+                <a id="download_log_anchor" href="#">
+                  <button type="button" id="download" class="btn btn-outline-success btn-sm" onclick="downloadLog()">Download Log</button>
+                </a>
               </div>
             </div>
           </div>
@@ -223,6 +225,7 @@
     socket.on('force_stop_script', (selectedCommodities) => {
 
       const selectedOption = parseInt(selectedCommodities);
+      console.log(selectedOption)
       switch (selectedOption) {
         case 1:
           //Gold
@@ -251,6 +254,10 @@
 
     });
 
+    socket.on('no_log_found', (msg) => {
+      alert(msg);
+    });
+
     socket.on('update_btn_state', (data) => {
       var btnStateJson = JSON.parse(JSON.stringify(data));
       const commodities_selection = document.getElementById("commodities_selection");
@@ -261,10 +268,10 @@
           var startBtn = document.getElementById('start')
           var stopBtn = document.getElementById('stop');
 
-          if(golde_btn_state){
+          if (golde_btn_state) {
             startBtn.disabled = true;
             stopBtn.disabled = false;
-          }else{
+          } else {
             startBtn.disabled = false;
             stopBtn.disabled = true;
           }
@@ -275,10 +282,10 @@
           var startBtn = document.getElementById('start')
           var stopBtn = document.getElementById('stop');
 
-          if(silver_btn_state){
+          if (silver_btn_state) {
             startBtn.disabled = true;
             stopBtn.disabled = false;
-          }else{
+          } else {
             startBtn.disabled = false;
             stopBtn.disabled = true;
           }
@@ -289,10 +296,10 @@
           var startBtn = document.getElementById('start')
           var stopBtn = document.getElementById('stop');
 
-          if(natural_gas_btn_state){
+          if (natural_gas_btn_state) {
             startBtn.disabled = true;
             stopBtn.disabled = false;
-          }else{
+          } else {
             startBtn.disabled = false;
             stopBtn.disabled = true;
           }
@@ -303,10 +310,10 @@
           var startBtn = document.getElementById('start')
           var stopBtn = document.getElementById('stop');
 
-          if(lead_btn_state){
+          if (lead_btn_state) {
             startBtn.disabled = true;
             stopBtn.disabled = false;
-          }else{
+          } else {
             startBtn.disabled = false;
             stopBtn.disabled = true;
           }
@@ -370,8 +377,14 @@
           break;
       }
 
+      scrollTextAreatToBottom();
 
     });
+
+    function scrollTextAreatToBottom() {
+      var textarea = document.getElementById('log_report');
+      textarea.scrollTop = textarea.scrollHeight;
+    }
 
     function isEmpty(str) {
       return (!str || str.length === 0);
@@ -428,29 +441,26 @@
       const commodities_selection = document.getElementById("commodities_selection");
       const selectedOption = commodities_selection.value;
       var selectedCommodities = -1;
+      var log_anchor = document.getElementById('download_log_anchor');
       switch (parseInt(selectedOption)) {
         case 1:
-          //Gold
-          selectedCommodities = 1;
-          socket.emit('download_log', { selected_commodities: `${selectedCommodities}` });
+          //Gold      
+          log_anchor.href = "{{ url_for('download',selectedCommodities=1) }}";
           break;
 
         case 2:
           //Silver
-          selectedCommodities = 2;
-          socket.emit('download_log', { selected_commodities: `${selectedCommodities}` });
+          log_anchor.href = "{{ url_for('download',selectedCommodities=2) }}";
           break;
 
         case 3:
           //Natural Gas
-          selectedCommodities = 3;
-          socket.emit('download_log', { selected_commodities: `${selectedCommodities}` });
+          log_anchor.href = "{{ url_for('download',selectedCommodities=3) }}";
           break;
 
         case 4:
           //Lead
-          selectedCommodities = 4;
-          socket.emit('download_log', { selected_commodities: `${selectedCommodities}` });
+          log_anchor.href = "{{ url_for('download',selectedCommodities=3) }}";
           break;
 
         default:
