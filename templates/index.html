@@ -97,7 +97,17 @@
         <div class="card-body">
           <div class="container-fluid text-right">
             <div class="row">
-              <div class="col-8 m-auto text-right">
+              <div class="col-2 m-auto text-right">
+                <select id="candle_interval_selection" class="form-select" aria-label="Default select example">
+                  <option>Select Candle Interval</option>
+                  <option value="1">1 Minute</option>
+                  <option value="2">5 Minutes</option>
+                  <option value="3">10 Minutes</option>
+                  <option value="4" selected>15 Minutes</option>
+                  <option value="5">30 MInutes</option>
+                </select>
+              </div>
+              <div class="col-3 m-auto text-right">
               </div>
               <div class="col-1 m-auto text-right">
                 <button type="button" id="start" class="btn btn-outline-success btn-sm" onclick="startScript()">Start
@@ -106,6 +116,8 @@
               <div class="col-1 m-auto text-right">
                 <button type="button" id="stop" class="btn btn-outline-danger btn-sm" onclick="stopScript()">Stop
                   Script</button>
+              </div>
+              <div class="col-3 m-auto text-right">
               </div>
               <div class="col-2 m-auto text-right">
                 <select id="commodities_selection" class="form-select" aria-label="Default select example"
@@ -131,13 +143,11 @@
             <br>
             <div class="row">
               <div class="col-10">
-
               </div>
               <div class="col-2 m-auto text-right">
-
-
                 <a id="download_log_anchor" href="#">
-                  <button type="button" id="download" class="btn btn-outline-success btn-sm" onclick="downloadLog()">Download Log</button>
+                  <button type="button" id="download" class="btn btn-outline-success btn-sm"
+                    onclick="downloadLog()">Download Log</button>
                 </a>
               </div>
             </div>
@@ -162,26 +172,59 @@
 
     const startScript = function () {
       const commodities_selection = document.getElementById("commodities_selection");
-      const selectedOption = parseInt(commodities_selection.value);
-      switch (selectedOption) {
+      const selectedOptionCommodities = parseInt(commodities_selection.value);
+
+      const candle_interval_selection = document.getElementById('candle_interval_selection');
+      var selectedOptionInterval = '';
+      var intervalValue = 4;
+
+      if (isNaN(candle_interval_selection.value)) {
+        selectedOptionInterval = '15minute'
+        intervalValue = 4;
+      } else {
+        switch (parseInt(candle_interval_selection.value)) {
+          case 1:
+            selectedOptionInterval = 'minute'
+            intervalValue = 1;
+            break;
+          case 2:
+            selectedOptionInterval = '5minute'
+            intervalValue = 2;
+            break;
+          case 3:
+            selectedOptionInterval = '10minute'
+            intervalValue = 3;
+            break;
+          case 4:
+            selectedOptionInterval = '15minute'
+            intervalValue = 4;
+            break;
+          case 5:
+            selectedOptionInterval = '30minute'
+            intervalValue = 5;
+            break;
+        }
+      }
+
+      switch (selectedOptionCommodities) {
         case 1:
           //Gold
-          socket.emit('start_script', { 'startScriptFor': 1 });
+          socket.emit('start_script', { 'startScriptFor': 1, 'selectedInterval': selectedOptionInterval,'intervalValue':intervalValue });
           break;
 
         case 2:
           //Silver
-          socket.emit('start_script', { 'startScriptFor': 2 });
+          socket.emit('start_script', { 'startScriptFor': 2, 'selectedInterval': selectedOptionInterval,'intervalValue':intervalValue });
           break;
 
         case 3:
           //Natural Gas
-          socket.emit('start_script', { 'startScriptFor': 3 });
+          socket.emit('start_script', { 'startScriptFor': 3, 'selectedInterval': selectedOptionInterval,'intervalValue':intervalValue });
           break;
 
         case 4:
           //Lead
-          socket.emit('start_script', { 'startScriptFor': 4 });
+          socket.emit('start_script', { 'startScriptFor': 4, 'selectedInterval': selectedOptionInterval,'intervalValue':intervalValue });
           break;
 
         default:

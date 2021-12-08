@@ -1,5 +1,7 @@
 from flask import Flask,render_template,request,send_file
 from datetime import datetime,timedelta
+import pytz
+import requests
 from flask_socketio import SocketIO
 import json
 import os
@@ -29,6 +31,7 @@ lead_log_report = None
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abcdefghijklmnopqrstuvwxyzVIKASJHA'
 socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*")
+tz = pytz.timezone('Asia/Kolkata')
 
 @app.route("/", methods=['POST', 'GET'])
 def home():
@@ -48,6 +51,7 @@ def settings():
 def download(selectedCommodities):
     if selectedCommodities == 1:
         now = datetime.now()
+        now = now.astimezone(tz)
         gold_log_file_name = "gold_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
         try:
@@ -62,6 +66,7 @@ def download(selectedCommodities):
         
     elif selectedCommodities == 2:
         now = datetime.now()
+        now = now.astimezone(tz)
         silver_log_file_name = "silver_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
         try:
@@ -76,6 +81,7 @@ def download(selectedCommodities):
         
     elif selectedCommodities == 3:
         now = datetime.now()
+        now = now.astimezone(tz)
         natural_gas_log_file_name = "natural_gas_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
         try:
@@ -90,6 +96,7 @@ def download(selectedCommodities):
         
     elif selectedCommodities == 4:
         now = datetime.now()
+        now = now.astimezone(tz)
         lead_log_file_name = "lead_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
         try:
@@ -127,18 +134,21 @@ def stopAllCommodities():
     stop_all_job.remove()
 
 
-stop_all_job = scheduler.add_job(stopAllCommodities, trigger='cron', hour='12', minute='36',second='30',day='*')
+stop_all_job = scheduler.add_job(stopAllCommodities, trigger='cron', hour='23', minute='58',second='30',day='*')
         
 @socketio.on('start_script')
 def start_script(data):
     selectedCommodities = data['startScriptFor']
-    print('start script btn clicked : ' + str(selectedCommodities))
+    selectedInterval = data['selectedInterval']
+    intervalValue = int(data['intervalValue'])
+    print('start script selected commodities : ' + str(selectedCommodities))
+    print('start script selected candle interval : ' + selectedInterval)
 
     with open("commodities_script_running_status.json", "r") as jsonFile:
         script_running_staus = json.load(jsonFile)
 
     if selectedCommodities == 1:
-        goldCommodities = GoldCommodities(socketio)
+        goldCommodities = GoldCommodities(socketio,selectedInterval)
         goldCommodities.loginKite()
 
         script_running_staus["Gold"] = True
@@ -149,10 +159,19 @@ def start_script(data):
         socketio.emit('update_btn_state',script_running_staus)
 
         global gold_job
-        gold_job = scheduler.add_job(goldCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='gold')
+        if intervalValue == 1:
+            gold_job = scheduler.add_job(goldCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='gold')
+        elif intervalValue == 2:
+            gold_job = scheduler.add_job(goldCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/5',id='gold')
+        elif intervalValue == 3:
+            gold_job = scheduler.add_job(goldCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/10',id='gold')
+        elif intervalValue == 4:
+            gold_job = scheduler.add_job(goldCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/15',id='gold')
+        elif intervalValue == 5:
+            gold_job = scheduler.add_job(goldCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/30',id='gold')
 
     elif selectedCommodities == 2:
-        silverCommodities = SilverCommodities(socketio)
+        silverCommodities = SilverCommodities(socketio,selectedInterval)
         silverCommodities.loginKite()
 
         script_running_staus["Silver"] = True
@@ -163,10 +182,19 @@ def start_script(data):
         socketio.emit('update_btn_state',script_running_staus)
 
         global silver_job
-        silver_job = scheduler.add_job(silverCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='silver')
+        if intervalValue == 1:
+            silver_job = scheduler.add_job(silverCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='silver')
+        elif intervalValue == 2:
+            silver_job = scheduler.add_job(silverCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/5',id='silver')
+        elif intervalValue == 3:
+            silver_job = scheduler.add_job(silverCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/10',id='silver')
+        elif intervalValue == 4:
+            silver_job = scheduler.add_job(silverCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/15',id='silver')
+        elif intervalValue == 4:
+            silver_job = scheduler.add_job(silverCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/30',id='silver')
 
     elif selectedCommodities == 3:
-        naturalGasCommodities = NaturalGasCommodities(socketio)
+        naturalGasCommodities = NaturalGasCommodities(socketio,selectedInterval)
         naturalGasCommodities.loginKite()
 
         script_running_staus["NaturalGas"] = True
@@ -177,10 +205,19 @@ def start_script(data):
         socketio.emit('update_btn_state',script_running_staus)
 
         global natural_gas_job
-        natural_gas_job = scheduler.add_job(naturalGasCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='naturalgas')
+        if intervalValue == 1:
+            natural_gas_job = scheduler.add_job(naturalGasCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='naturalgas')
+        elif intervalValue == 2:
+            natural_gas_job = scheduler.add_job(naturalGasCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/5',id='naturalgas')
+        elif intervalValue == 3:
+            natural_gas_job = scheduler.add_job(naturalGasCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/10',id='naturalgas')
+        elif intervalValue == 4:
+            natural_gas_job = scheduler.add_job(naturalGasCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/15',id='naturalgas')
+        elif intervalValue == 5:
+            natural_gas_job = scheduler.add_job(naturalGasCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/30',id='naturalgas')
 
     elif selectedCommodities == 4:
-        leadCommodities = LeadCommodities(socketio)
+        leadCommodities = LeadCommodities(socketio,selectedInterval)
         leadCommodities.loginKite()
 
         script_running_staus["Lead"] = True
@@ -191,7 +228,16 @@ def start_script(data):
         socketio.emit('update_btn_state',script_running_staus)
         
         global lead_job
-        lead_job = scheduler.add_job(leadCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='lead')
+        if intervalValue == 1:
+            lead_job = scheduler.add_job(leadCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*',id='lead')
+        elif intervalValue == 2:
+            lead_job = scheduler.add_job(leadCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/5',id='lead')
+        elif intervalValue == 3:
+            lead_job = scheduler.add_job(leadCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/10',id='lead')
+        elif intervalValue == 4:
+            lead_job = scheduler.add_job(leadCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/15',id='lead')
+        elif intervalValue == 5:
+            lead_job = scheduler.add_job(leadCommodities.startCommoditiesAlgo, trigger='cron', hour='9,10,11,12,13,14,15,16,17,18,19,20,21,22,23', minute='*/30',id='lead')
         
 
 @socketio.on('stop_script')
@@ -220,6 +266,7 @@ def stopGoldCommodities(script_running_staus):
             gold_job.remove()
 
         now = datetime.now()
+        now = now.astimezone(tz)
         gold_log_file_name = "gold_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
         f=open(gold_log_file_name, "a+")
@@ -260,6 +307,7 @@ def stopSilverCommodities(script_running_staus):
             silver_job.remove()
 
         now = datetime.now()
+        now = now.astimezone(tz)
         silver_log_file_name = "silver_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
         f=open(silver_log_file_name, "a+")
@@ -300,6 +348,7 @@ def stopNaturalGasCommodities(script_running_staus):
             natural_gas_job.remove()
 
         now = datetime.now()
+        now = now.astimezone(tz)
         natural_gas_log_file_name = "natural_gas_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
         f=open(natural_gas_log_file_name, "a+")
@@ -340,6 +389,7 @@ def stopLeadCommodities(script_running_staus):
             lead_job.remove()
 
         now = datetime.now()
+        now = now.astimezone(tz)
         lead_log_file_name = "lead_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
         f=open(lead_log_file_name, "a+")
@@ -375,13 +425,23 @@ def stopLeadCommodities(script_running_staus):
         print(ex)
 
 @socketio.on('save_access_token')
-def save_access_token(data):
-    accessToken = data['access_token']
-    print('received access token : ' + accessToken)
+def save_access_token():
+    # Fetch Access-Token From Api
+    # https://www.zigtap.com/zerodha/myaccesstoken.txt
+    accessTokenUrl = 'https://www.zigtap.com/zerodha/myaccesstoken.txt'
+    try:
+        uResponse = requests.get(accessTokenUrl)
+        access_token_fetched = uResponse.text
+        print(access_token_fetched)
+        access_token_json = { 'access_token' : access_token_fetched }
+        # write accessToken to json file
+        with open("access_token.json", "w") as outfile:
+            json.dump(access_token_json, outfile)
 
-    # write accessToken to json file
-    with open("access_token.json", "w") as outfile:
-        json.dump(data, outfile)
+        socketio.emit('access_token_updated',access_token_fetched)
+
+    except requests.ConnectionError as ex:
+        print(ex)
 
 @socketio.on('commodities_change')
 def commodities_change(data):
@@ -398,6 +458,7 @@ def commodities_change(data):
         try:
 
             now = datetime.now()
+            now = now.astimezone(tz)
             gold_log_file_name = "gold_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
             # read the txt file and get content
@@ -422,6 +483,7 @@ def commodities_change(data):
         try:
 
             now = datetime.now()
+            now = now.astimezone(tz)
             silver_log_file_name = "silver_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
             # read the txt file and get content
@@ -446,6 +508,7 @@ def commodities_change(data):
         try:
 
             now = datetime.now()
+            now = now.astimezone(tz)
             natural_gas_log_file_name = "natural_gas_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
             # read the txt file and get content
@@ -470,6 +533,7 @@ def commodities_change(data):
         try:
 
             now = datetime.now()
+            now = now.astimezone(tz)
             lead_log_file_name = "lead_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
             # read the txt file and get content

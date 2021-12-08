@@ -49,46 +49,54 @@
     <br>
     <div class="container">
         <div class="row">
-            
-            <form class="col-4 m-auto">
-                <h6></h6>
-                <div class="form-group">
-                    <label for="access_token">Set Access Token</label>
-                    <input type="text" class="form-control" id="access_token" placeholder="Paste kite access token">
+            <div class="col-3 m-auto text-center">
+            </div>
+            <div class="col-6 m-auto text-center">
+                <h3>Update your kite access token</h3>
+            </div>
+            <div class="col-3 m-auto text-center">
+                
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-3 m-auto text-center">
+                
+            </div>
+            <div class="col-6 m-auto text-center">
+                <p id="access_token_status"></p>
+            </div>
+            <div class="col-3 m-auto text-center">
+                
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-3 m-auto text-center">
+                
+            </div>
+            <div class="col-6 m-auto text-center">
+                <div class="d-flex justify-content-center">
+                    <button type="button" class="btn btn-primary" onclick=updateAccessToken()>Update Access Token</button>
                 </div>
-                <div class="container">
-                    <div class="row">
-                        <div class="col-4 m-auto text-center">
-                        </div>
-                        <div class="col-4 m-auto text-center">
-                        </div>
-                        <div class="col-4 m-auto text-center">
-                            <div class="d-flex justify-content-center">
-                                <button type="button" class="btn btn-primary" onclick=saveSettings()>Save</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-            </form>
+            </div>
+            <div class="col-3 m-auto text-center">
+            </div>
         </div>
     </div>
 
     <script>
         var socket = io();
 
-        const saveSettings = function () {
-            var accessTokenDiv = document.getElementById('access_token');
-            accessToken = accessTokenDiv.value;
-            console.log(accessToken)
-
-            var accessTokenLabel = document.querySelector('h6');
-            accessTokenLabel.innerHTML = 'Access Token Saved Successfully';
-
-            socket.emit('save_access_token', { access_token: `${accessToken}` });
-
+        const updateAccessToken = function () {
+            var access_token_status = document.getElementById('access_token_status');
+            access_token_status.innerHTML = 'Please wait while fetching and updating access token ...'
+            socket.emit('save_access_token');
         }
+
+        socket.on('access_token_updated', (selectedCommodities) => {
+            var access_token_status = document.getElementById('access_token_status');
+            access_token_status.innerHTML = 'Access token fetched and saved successfully'
+        });
     </script>
 
     <!-- Optional JavaScript -->

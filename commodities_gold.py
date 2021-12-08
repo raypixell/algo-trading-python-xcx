@@ -7,9 +7,7 @@ import time
 import json
 import logging
 import os
-
-
-
+import pytz
 
 class GoldCommodities:
 
@@ -37,9 +35,10 @@ class GoldCommodities:
     kite = None
 
     DOWNLOAD_LOG_FILE_NAME = None
+    tz = pytz.timezone('Asia/Kolkata')
 
 
-    def __init__(self,socketio):
+    def __init__(self,socketio,selectedInterval):
 
         self.socketio = socketio
 
@@ -52,6 +51,7 @@ class GoldCommodities:
 
         # Log file name
         now = datetime.now()
+        now = now.astimezone(self.tz)
         self.DOWNLOAD_LOG_FILE_NAME = "gold_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
         print(self.DOWNLOAD_LOG_FILE_NAME)
 
@@ -68,13 +68,15 @@ class GoldCommodities:
         self.commoditiesLogList = []
 
         # Candle duration or interval
-        self.candleInterval = '15minute'
+        self.candleInterval = selectedInterval
         self.no_of_days_for_candle_data = 30
         self.quantity = 1
 
         # Define Range to date
         # By Default it is hard coded set for 60 days
-        self.from_date = datetime.strftime(datetime.now() - timedelta(self.no_of_days_for_candle_data),"%Y-%m-%d")
+        now = datetime.now()
+        now = now.astimezone(self.tz)
+        self.from_date = datetime.strftime(now - timedelta(self.no_of_days_for_candle_data),"%Y-%m-%d")
         self.to_date = datetime.today().strftime('%Y-%m-%d')
 
         # commodities instrument token
@@ -86,13 +88,18 @@ class GoldCommodities:
     def loginKite(self):
         self.kite = KiteConnect(api_key=self.api_key,timeout=20)
         self.kite.set_access_token(self.access_token)
-        self.logMessage = 'Successfully logged in Kite API!'
+        
+        self.logMessage = 'Gold Commodities Script Started...'
+        self.sendLogReport(self.logMessage)
+        self.logMessage = 'Script automatically executed at an interval of ' + self.candleInterval
         self.sendLogReport(self.logMessage)
 
     def startCommoditiesAlgo(self):
         try:
+            now = datetime.now()
+            now = now.astimezone(self.tz)
 
-            logString = 'start checking at : ' + str(datetime.now())
+            logString = 'start checking at : ' + str(now)
             self.sendLogReport(logString)
 
             # Now Checking Commodities
@@ -158,6 +165,7 @@ class GoldCommodities:
             lastCandle = commoditiesDF.iloc[-1]
             lastCandleClose = lastCandle['close']
             lastCandleSupertrend = lastCandle['supertrend']
+            lastCandleAlligatorJas = lastCandle['alligator_jaws']
         
             secondLastCandle = commoditiesDF.iloc[-2]
             secondLastCandleClose = secondLastCandle['close']
@@ -188,27 +196,24 @@ class GoldCommodities:
 
                     logString = '***************************'
                     self.sendLogReport(logString)
-                    logString ='TRADINGSYMBOL : '
-                    self.sendLogReport(logString)
-                    logString = str(tokens[token])
+                    logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
                     self.sendLogReport(logString)
                     logString ='***************************'
                     self.sendLogReport(logString)
-                    logString ='BUY SIGNAL : '
+                    logString ='# BUY SIGNAL #'
                     self.sendLogReport(logString)
-                    logString ='CLOSE PRICE : '
+                    logString ='CLOSE PRICE : ' + str(lastCandle['close'])
                     self.sendLogReport(logString)
-                    logString = str(lastCandle['close'])
-                    self.sendLogReport(logString)
-                    logString ='STOP LOSS : '
-                    self.sendLogReport(logString) 
-                    logString = str(lastCandle['low'])
+                    logString ='STOP LOSS : ' + str(lastCandle['low'])
                     self.sendLogReport(logString)
 
                     # generating log
                     # creating dictonary 
-                    logDict = {'date':datetime.now(),
-                            'tradingsymbol':tokens[token],
+                    now = datetime.now()
+                    now = now.astimezone(self.tz)
+
+                    logDict = {'date':str(now),
+                            'tradingsymbol':self.tokens[token],
                             'open': lastCandle['open'],
                             'close':lastCandle['close'],
                             'high':lastCandle['high'],
@@ -244,27 +249,23 @@ class GoldCommodities:
 
                     logString = '***************************'
                     self.sendLogReport(logString)
-                    logString ='TRADINGSYMBOL : '
-                    self.sendLogReport(logString)
-                    logString = str(tokens[token])
+                    logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
                     self.sendLogReport(logString)
                     logString ='***************************'
                     self.sendLogReport(logString)
-                    logString ='SELL SIGNAL : '
+                    logString ='# SELL SIGNAL #'
                     self.sendLogReport(logString)
-                    logString ='CLOSE PRICE : '
+                    logString ='CLOSE PRICE : ' + str(lastCandle['close'])
                     self.sendLogReport(logString)
-                    logString = str(lastCandle['close'])
-                    self.sendLogReport(logString)
-                    logString ='STOP LOSS : '
-                    self.sendLogReport(logString) 
-                    logString =str(lastCandle['high'])
+                    logString ='STOP LOSS : ' + str(lastCandle['high'])
                     self.sendLogReport(logString)
 
                     # generating log
                     # creating dictonary 
-                    logDict = {'date':datetime.now(),
-                            'tradingsymbol':tokens[token],
+                    now = datetime.now()
+                    now = now.astimezone(self.tz)
+                    logDict = {'date':str(now),
+                            'tradingsymbol':self.tokens[token],
                             'open': lastCandle['open'],
                             'close':lastCandle['close'],
                             'high':lastCandle['high'],
@@ -277,6 +278,21 @@ class GoldCommodities:
                 
                     log = pd.concat([commoditiesLogDF,logDF],axis=1)
                     log.to_excel(self.LOG_FILE_NAME)
+
+            
+            if not isTraded:
+                logString = '----------------------------------'
+                self.sendLogReport(logString)
+                logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
+                self.sendLogReport(logString)
+                logString ='CLOSE PRICE : ' + str(lastCandle['close'])
+                self.sendLogReport(logString)
+                logString = "SUPERTREND VALUE : " + str(lastCandleSupertrend)
+                self.sendLogReport(logString)
+                logString = "ALLIGATOR JAW VALUE : " + str(lastCandleAlligatorJas)
+                self.sendLogReport(logString)
+                logString = '----------------------------------'
+                self.sendLogReport(logString)
 
             time.sleep(1)
     
