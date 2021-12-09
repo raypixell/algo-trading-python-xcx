@@ -91,7 +91,7 @@ class GoldCommodities:
         
         self.logMessage = 'Gold Commodities Script Started...'
         self.sendLogReport(self.logMessage)
-        self.logMessage = 'Script automatically executed at an interval of ' + self.candleInterval
+        self.logMessage = 'Script automatically executed at an interval of ' +"' " +self.candleInterval+" '"
         self.sendLogReport(self.logMessage)
 
     def startCommoditiesAlgo(self):
@@ -107,7 +107,6 @@ class GoldCommodities:
         except Exception as ex:
             logString = str(ex)
             self.sendLogReport(logString)
-
             self.socketio.emit('force_stop_script',1)
 
     def checkComodities(self):
@@ -175,7 +174,7 @@ class GoldCommodities:
             secondLastAligatorJaw = secondLastCandle['alligator_jaws']
 
             if lastCandleClose > lastCandleSupertrend:
-                logString = 'SUPER_TREND : GREEN : BUY'
+                logString = 'SUPER_TREND : GREEN'
                 self.sendLogReport(logString)
 
                 # check alligator jaw
@@ -194,13 +193,26 @@ class GoldCommodities:
                 if ((secondLastCandleOpen < secondLastAligatorJaw) and (secondLastCandleClose > secondLastAligatorJaw)) and (lastCandleClose >= secondLastCandleHigh):
                     isTraded = True
 
-                    logString = '***************************'
+                    order_id = self.kite.place_order(variety=kite.VARIETY_REGULAR,    
+                            exchange='MCX',
+                            tradingsymbol=self.tokens[token],
+                            transaction_type=kite.TRANSACTION_TYPE_BUY,
+                            quantity=self.quantity,
+                            product='MIS',
+                            order_type='SL-M',
+                            trigger_price=str(lastCandle['low']),
+                            tag='XCS')
+                    
+                    # Send Log Info to Connected Client
+                    logString ='***************************'
                     self.sendLogReport(logString)
                     logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
                     self.sendLogReport(logString)
                     logString ='***************************'
                     self.sendLogReport(logString)
                     logString ='# BUY SIGNAL #'
+                    self.sendLogReport(logString)
+                    logString ='ORDER ID : ' + str(order_id)
                     self.sendLogReport(logString)
                     logString ='CLOSE PRICE : ' + str(lastCandle['close'])
                     self.sendLogReport(logString)
@@ -214,6 +226,7 @@ class GoldCommodities:
 
                     logDict = {'date':str(now),
                             'tradingsymbol':self.tokens[token],
+                            'order_id':order_id,
                             'open': lastCandle['open'],
                             'close':lastCandle['close'],
                             'high':lastCandle['high'],
@@ -228,7 +241,7 @@ class GoldCommodities:
                     log.to_excel(self.LOG_FILE_NAME)
 
             elif lastCandleSupertrend > lastCandleClose:
-                logString = 'SUPER_TREND : RED : SELL'
+                logString = 'SUPER_TREND : RED'
                 self.sendLogReport(logString)
 
                 # check aligator jaw
@@ -247,6 +260,16 @@ class GoldCommodities:
                 if ((secondLastCandleOpen > secondLastAligatorJaw) and (secondLastCandleClose < secondLastAligatorJaw)) and (lastCandleClose <= secondLastCandleLow):
                     isTraded = True
 
+                    order_id = self.kite.place_order(variety=kite.VARIETY_REGULAR,
+                            exchange ='MCX',
+                            tradingsymbol =self.tokens[token],
+                            transaction_type = kite.TRANSACTION_TYPE_SELL,
+                            quantity = self.quantity,
+                            product = 'MIS',
+                            order_type = 'SL-M',
+                            trigger_price = str(lastCandle['high']),
+                            tag='XCS')
+
                     logString = '***************************'
                     self.sendLogReport(logString)
                     logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
@@ -254,6 +277,8 @@ class GoldCommodities:
                     logString ='***************************'
                     self.sendLogReport(logString)
                     logString ='# SELL SIGNAL #'
+                    self.sendLogReport(logString)
+                    logString ='ORDER ID : ' + str(order_id)
                     self.sendLogReport(logString)
                     logString ='CLOSE PRICE : ' + str(lastCandle['close'])
                     self.sendLogReport(logString)
@@ -266,6 +291,7 @@ class GoldCommodities:
                     now = now.astimezone(self.tz)
                     logDict = {'date':str(now),
                             'tradingsymbol':self.tokens[token],
+                            'order_id':order_id,
                             'open': lastCandle['open'],
                             'close':lastCandle['close'],
                             'high':lastCandle['high'],
@@ -281,8 +307,6 @@ class GoldCommodities:
 
             
             if not isTraded:
-                logString = '----------------------------------'
-                self.sendLogReport(logString)
                 logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
                 self.sendLogReport(logString)
                 logString ='CLOSE PRICE : ' + str(lastCandle['close'])
@@ -302,7 +326,7 @@ class GoldCommodities:
             logString = '--------End-----------'
             self.sendLogReport(logString)
         else:
-            logString = '----------------------------------'
+            logString = '--------End-----------'
             self.sendLogReport(logString)
 
     def sendLogReport(self,logString):

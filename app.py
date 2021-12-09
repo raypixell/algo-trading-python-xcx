@@ -4,7 +4,7 @@ import pytz
 import requests
 from flask_socketio import SocketIO
 import json
-import os
+import os.path
 from apscheduler.schedulers.background import BackgroundScheduler
 import schedule
 from commodities_gold import GoldCommodities
@@ -54,29 +54,19 @@ def download(selectedCommodities):
         now = now.astimezone(tz)
         gold_log_file_name = "gold_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
-        try:
-            filesize = os.path.getsize(gold_log_file_name)
-            if filesize == 0:
-                return "No log found for Gold Commodities."
-            else:
-                return send_file(gold_log_file_name, as_attachment=True)
-        except Exception as ex:
-            print(ex)
+        if os.path.exists(gold_log_file_name):
+            return send_file(gold_log_file_name, as_attachment=True)
+        else:
             return "No log found for Gold Commodities."
-        
+   
     elif selectedCommodities == 2:
         now = datetime.now()
         now = now.astimezone(tz)
         silver_log_file_name = "silver_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
-        try:
-            filesize = os.path.getsize(silver_log_file_name)
-            if filesize == 0:
-                return "No log found for Silver Commodities."
-            else:
-                return send_file(silver_log_file_name, as_attachment=True)
-        except Exception as ex:
-            print(ex)
+        if os.path.exists(silver_log_file_name):
+            return send_file(silver_log_file_name, as_attachment=True)
+        else:
             return "No log found for Silver Commodities."
         
     elif selectedCommodities == 3:
@@ -84,14 +74,9 @@ def download(selectedCommodities):
         now = now.astimezone(tz)
         natural_gas_log_file_name = "natural_gas_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
-        try:
-            filesize = os.path.getsize(natural_gas_log_file_name)
-            if filesize == 0:
-                return "No log found for Natural Gas Commodities."
-            else:
-                return send_file(natural_gas_log_file_name, as_attachment=True)
-        except Exception as ex:
-            print(ex)
+        if os.path.exists(natural_gas_log_file_name):
+            return send_file(natural_gas_log_file_name, as_attachment=True)
+        else:
             return "No log found for Natural Gas Commodities."
         
     elif selectedCommodities == 4:
@@ -99,14 +84,9 @@ def download(selectedCommodities):
         now = now.astimezone(tz)
         lead_log_file_name = "lead_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
 
-        try:
-            filesize = os.path.getsize(lead_log_file_name)
-            if filesize == 0:
-                return "No log found for Lead Commodities."
-            else:
-                return send_file(lead_log_file_name, as_attachment=True)
-        except Exception as ex:
-            print(ex)
+        if os.path.exists(lead_log_file_name):
+            return send_file(lead_log_file_name, as_attachment=True)
+        else:
             return "No log found for Lead Commodities."
         
         
@@ -434,6 +414,7 @@ def save_access_token():
         access_token_fetched = uResponse.text
         print(access_token_fetched)
         access_token_json = { 'access_token' : access_token_fetched }
+
         # write accessToken to json file
         with open("access_token.json", "w") as outfile:
             json.dump(access_token_json, outfile)
@@ -454,7 +435,6 @@ def commodities_change(data):
     socketio.emit('update_btn_state',script_running_staus)
 
     if int(selectedCommodities) == 1:
-        # Now check if previous log report present or not
         try:
 
             now = datetime.now()
@@ -479,7 +459,6 @@ def commodities_change(data):
             print(ex)
             
     elif int(selectedCommodities) == 2:
-        # Now check if previous log report present or not
         try:
 
             now = datetime.now()
@@ -504,7 +483,6 @@ def commodities_change(data):
             print(ex)
 
     elif int(selectedCommodities) == 3:
-        # Now check if previous log report present or not
         try:
 
             now = datetime.now()
@@ -529,7 +507,6 @@ def commodities_change(data):
             print(ex)
 
     elif int(selectedCommodities) == 4:
-        # Now check if previous log report present or not
         try:
 
             now = datetime.now()
@@ -549,7 +526,7 @@ def commodities_change(data):
             socketio.emit('log_report',logMessage)
     
         except Exception as ex:
-            logMessage = {"logReport" : "","selected_commodities":3}
+            logMessage = {"logReport" : "","selected_commodities":4}
             socketio.emit('log_report',logMessage)
             print(ex)    
 

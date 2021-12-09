@@ -380,10 +380,7 @@
       switch (selectedOption) {
         case 1:
           if (selected_commodities == 1) {
-            console.log(log_message);
             textarea.value = log_message;
-          } else {
-            textarea.value = "";
           }
 
           break;
@@ -392,16 +389,12 @@
           if (selected_commodities == 2) {
             console.log(log_message);
             textarea.value = log_message;
-          } else {
-            textarea.value = "";
           }
           break;
 
         case 3:
           if (selected_commodities == 3) {
             textarea.value = log_message;
-          } else {
-            textarea.value = "";
           }
 
           break;
@@ -409,8 +402,6 @@
         case 4:
           if (selected_commodities == 4) {
             textarea.value = log_message;
-          } else {
-            textarea.value = "";
           }
 
           break;
@@ -480,10 +471,8 @@
     }
 
     const downloadLog = function () {
-      const log_report_label = document.getElementById("log_report_label");
       const commodities_selection = document.getElementById("commodities_selection");
       const selectedOption = commodities_selection.value;
-      var selectedCommodities = -1;
       var log_anchor = document.getElementById('download_log_anchor');
       switch (parseInt(selectedOption)) {
         case 1:
@@ -503,7 +492,7 @@
 
         case 4:
           //Lead
-          log_anchor.href = "{{ url_for('download',selectedCommodities=3) }}";
+          log_anchor.href = "{{ url_for('download',selectedCommodities=4) }}";
           break;
 
         default:
