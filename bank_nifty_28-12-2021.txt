@@ -1,0 +1,232 @@
+Bank Nifty Script Started...
+Script automatically executed at an interval of ' 5minute '
+Start Checking At : 14:00:05
+Fetched Candle Time : 14:-5:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35269.25
+CLOSE PRICE : 35292.0
+CANDLE LOW : 35261.0
+EMA 5 : 35266.79
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:05:05
+Fetched Candle Time : 14:00:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35289.3
+CLOSE PRICE : 35273.0
+CANDLE LOW : 35261.0
+EMA 5 : 35268.86
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:10:05
+Fetched Candle Time : 14:05:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35273.0
+CLOSE PRICE : 35295.0
+CANDLE LOW : 35263.05
+EMA 5 : 35277.58
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:15:05
+Fetched Candle Time : 14:10:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35298.8
+CLOSE PRICE : 35271.55
+CANDLE LOW : 35269.1
+EMA 5 : 35275.57
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:20:05
+Fetched Candle Time : 14:15:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35270.0
+CLOSE PRICE : 35296.85
+CANDLE LOW : 35270.0
+EMA 5 : 35282.66
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:25:05
+Fetched Candle Time : 14:20:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35300.0
+CLOSE PRICE : 35252.85
+CANDLE LOW : 35212.1
+EMA 5 : 35272.72
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:30:05
+Fetched Candle Time : 14:25:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35254.8
+CLOSE PRICE : 35257.3
+CANDLE LOW : 35237.6
+EMA 5 : 35267.58
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:35:05
+Fetched Candle Time : 14:30:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35257.3
+CLOSE PRICE : 35255.0
+CANDLE LOW : 35255.0
+EMA 5 : 35263.39
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:40:05
+Fetched Candle Time : 14:35:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35255.0
+CLOSE PRICE : 35212.4
+CANDLE LOW : 35207.0
+EMA 5 : 35246.39
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:45:05
+Fetched Candle Time : 14:40:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35212.4
+CLOSE PRICE : 35151.8
+CANDLE LOW : 35122.8
+EMA 5 : 35214.86
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:50:05
+Fetched Candle Time : 14:45:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35153.5
+CLOSE PRICE : 35125.75
+CANDLE LOW : 35079.0
+EMA 5 : 35185.16
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 14:55:05
+Fetched Candle Time : 14:50:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35127.15
+CLOSE PRICE : 35167.35
+CANDLE LOW : 35113.55
+EMA 5 : 35179.22
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 15:00:05
+Fetched Candle Time : 15:-5:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35169.0
+CLOSE PRICE : 35173.0
+CANDLE LOW : 35155.0
+EMA 5 : 35177.15
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 15:05:05
+Fetched Candle Time : 15:00:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35176.9
+CLOSE PRICE : 35239.95
+CANDLE LOW : 35170.0
+EMA 5 : 35198.08
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 15:10:05
+Fetched Candle Time : 15:05:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35236.6
+CLOSE PRICE : 35258.05
+CANDLE LOW : 35205.55
+EMA 5 : 35218.07
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 15:15:05
+Fetched Candle Time : 15:10:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35258.05
+CLOSE PRICE : 35224.2
+CANDLE LOW : 35215.3
+EMA 5 : 35220.11
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 15:20:05
+Fetched Candle Time : 15:15:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35227.7
+CLOSE PRICE : 35230.2
+CANDLE LOW : 35208.1
+EMA 5 : 35223.48
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 15:25:05
+Fetched Candle Time : 15:20:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35230.2
+CLOSE PRICE : 35225.6
+CANDLE LOW : 35205.65
+EMA 5 : 35224.18
+----------------------------------
+No trade this session...
+--------End-----------
+Start Checking At : 15:30:05
+Fetched Candle Time : 15:25:00
+Please wait while checking " BANK NIFTY " futures...
+----------------------------------
+TRADINGSYMBOL : BANKNIFTY21DECFUT
+OPEN PRICE : 35225.6
+CLOSE PRICE : 35210.5
+CANDLE LOW : 35200.0
+EMA 5 : 35219.62
+----------------------------------
+No trade this session...
+--------End-----------
+Script Stopped! at : 28-12-2021  15:30
+---------------------------

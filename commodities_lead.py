@@ -37,10 +37,14 @@ class LeadCommodities:
 
     DOWNLOAD_LOG_FILE_NAME = None
     tz = pytz.timezone('Asia/Kolkata')
+    currentTime = None
+
+    TERMINATE_LEAD = None
 
     def __init__(self,socketio,selectedInterval):
 
         self.socketio = socketio
+        self.TERMINATE_LEAD = False
 
         # Api key and access token
         with open('access_token.json', 'r') as openfile:
@@ -52,7 +56,7 @@ class LeadCommodities:
         # Log file name
         now = datetime.now()
         now = now.astimezone(self.tz)
-        self.DOWNLOAD_LOG_FILE_NAME = "lead_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
+        self.DOWNLOAD_LOG_FILE_NAME = "lead_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
         print(self.DOWNLOAD_LOG_FILE_NAME)
 
         # Log file name
@@ -88,16 +92,69 @@ class LeadCommodities:
         self.logMessage = 'Script automatically executed at an interval of ' +"' " +self.candleInterval+" '"
         self.sendLogReport(self.logMessage)
 
-    def startCommoditiesAlgo(self):
+    def stopThread(self):
+        print('stopThread called....')
+        self.TERMINATE_LEAD = True
+
+    def startCommoditiesAlgo(self,timeInterval):
+
+        self.TERMINATE_LEAD = False
+        
         try:
-            now = datetime.now()
-            now = now.astimezone(self.tz)
+            while not self.TERMINATE_LEAD:
+                now = datetime.now()
+                now = now.astimezone(self.tz)
 
-            logString = 'start checking at : ' + str(now)
-            self.sendLogReport(logString)
+                if timeInterval == 1:
+                    if now.second == 0:
+                        self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                        logString = 'start checking at : ' + str(self.currentTime)
+                        self.sendLogReport(logString)
 
-            # Now Checking Commodities
-            self.checkComodities()
+                        # Now Checking Commodities
+                        time.sleep(1)
+                        self.checkComodities()
+                    
+                elif timeInterval == 5:
+                    if now.second == 0 and now.minute % 5 == 0:
+                        self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                        logString = 'start checking at : ' + str(self.currentTime)
+                        self.sendLogReport(logString)
+
+                        # Now Checking Commodities
+                        time.sleep(1)
+                        self.checkComodities()
+                
+                elif timeInterval == 10:
+                    if now.second == 0 and now.minute % 10 == 0:
+                        self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                        logString = 'start checking at : ' + str(self.currentTime)
+                        self.sendLogReport(logString)
+
+                        # Now Checking Commodities
+                        time.sleep(1)
+                        self.checkComodities()
+                
+                elif timeInterval == 15:
+                    if now.second == 0 and now.minute % 15 == 0:
+                        self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                        logString = 'start checking at : ' + str(self.currentTime)
+                        self.sendLogReport(logString)
+
+                        # Now Checking Commodities
+                        time.sleep(1)
+                        self.checkComodities()
+                
+                elif timeInterval == 30:
+                    if now.second == 0 and now.minute % 30 == 0:
+                        self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                        logString = 'start checking at : ' + str(self.currentTime)
+                        self.sendLogReport(logString)
+
+                        # Now Checking Commodities
+                        time.sleep(1)
+                        self.checkComodities()
+                           
         except Exception as ex:
             logString = str(ex)
             self.sendLogReport(logString)
@@ -123,7 +180,7 @@ class LeadCommodities:
 
             # Commodities Data Frame
             commoditiesDF = pd.DataFrame(records)
-            commoditiesDF.drop(commoditiesDF.tail(1).index,inplace=True)
+            # commoditiesDF.drop(commoditiesDF.tail(1).index,inplace=True)
 
             high = commoditiesDF['high']
             low = commoditiesDF['low']
@@ -187,14 +244,14 @@ class LeadCommodities:
                 if ((secondLastCandleOpen < secondLastAligatorJaw) and (secondLastCandleClose > secondLastAligatorJaw)) and (lastCandleClose >= secondLastCandleHigh):
                     isTraded = True
 
-                    order_id = self.kite.place_order(variety=kite.VARIETY_REGULAR,
+                    order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
                             exchange ='MCX' ,
                             tradingsymbol =self.tokens[token],
-                            transaction_type = kite.TRANSACTION_TYPE_BUY,
+                            transaction_type = self.kite.TRANSACTION_TYPE_BUY,
                             quantity = self.quantity,
                             product = 'MIS', 
                             order_type = 'SL-M',
-                            trigger_price = str(lastCandle['low']),
+                            trigger_price = str(round(secondLastCandleLow,2)),
                             tag='XCS')
 
                     logString = '***************************'
@@ -207,24 +264,25 @@ class LeadCommodities:
                     self.sendLogReport(logString)
                     logString ='ORDER ID : ' + str(order_id)
                     self.sendLogReport(logString)
-                    logString ='CLOSE PRICE : ' + str(lastCandle['close'])
+                    logString ='CLOSE PRICE : ' + str(round(lastCandle['close'],2))
                     self.sendLogReport(logString)
-                    logString ='STOP LOSS : ' + str(lastCandle['low'])
+                    logString ='STOP LOSS : ' + str(round(secondLastCandleLow,2))
                     self.sendLogReport(logString)
 
                     # generating log
                     # creating dictonary 
                     now = datetime.now()
                     now = now.astimezone(self.tz)
-                    logDict = {'date':str(now),
+                    self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                    logDict = {'date':str(self.currentTime),
                             'tradingsymbol':self.tokens[token],
                             'order_id':order_id,
-                            'open': lastCandle['open'],
-                            'close':lastCandle['close'],
-                            'high':lastCandle['high'],
-                            'low':lastCandle['low'],
+                            'open': round(lastCandle['open'],2),
+                            'close':round(lastCandle['close'],2),
+                            'high':round(lastCandle['high'],2),
+                            'low':round(lastCandle['low'],2),
                             'signal':'BUY',
-                            'stop_loss':lastCandle['low']}
+                            'stop_loss':round(secondLastCandleLow,2)}
                 
                     commoditiesLogList.append(logDict)
                     logDF = pd.DataFrame(commoditiesLogList)
@@ -259,7 +317,7 @@ class LeadCommodities:
                             quantity = self.quantity,
                             product = 'MIS', 
                             order_type = 'SL-M',
-                            trigger_price = str(lastCandle['high']),
+                            trigger_price = str(round(secondLastCandleHigh,2)),
                             tag='XCS')
 
                     logString = '***************************'
@@ -272,24 +330,25 @@ class LeadCommodities:
                     self.sendLogReport(logString)
                     logString ='ORDER ID : ' + str(order_id)
                     self.sendLogReport(logString)
-                    logString ='CLOSE PRICE : ' + str(lastCandle['close'])
+                    logString ='CLOSE PRICE : ' + str(round(lastCandle['close'],2))
                     self.sendLogReport(logString)
-                    logString ='STOP LOSS : ' + str(lastCandle['high'])
+                    logString ='STOP LOSS : ' + str(round(secondLastCandleHigh,2))
                     self.sendLogReport(logString)
 
                     # generating log
                     # creating dictonary 
                     now = datetime.now()
                     now = now.astimezone(self.tz)
-                    logDict = {'date':str(now),
+                    self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                    logDict = {'date':str(self.currentTime),
                             'tradingsymbol':self.tokens[token],
                             'order_id':order_id,
-                            'open': lastCandle['open'],
-                            'close':lastCandle['close'],
-                            'high':lastCandle['high'],
-                            'low':lastCandle['low'],
+                            'open': round(lastCandle['open'],2),
+                            'close':round(lastCandle['close'],2),
+                            'high':round(lastCandle['high'],2),
+                            'low':round(lastCandle['low'],2),
                             'signal':'SELL',
-                            'stop_loss':lastCandle['high']}
+                            'stop_loss':round(secondLastCandleHigh,2)}
                 
                     commoditiesLogList.append(logDict)
                     logDF = pd.DataFrame(commoditiesLogList)
@@ -300,11 +359,11 @@ class LeadCommodities:
             if not isTraded:
                 logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
                 self.sendLogReport(logString)
-                logString ='CLOSE PRICE : ' + str(lastCandle['close'])
+                logString ='CLOSE PRICE : ' + str(round(lastCandle['close'],2))
                 self.sendLogReport(logString)
-                logString = "SUPERTREND VALUE : " + str(lastCandleSupertrend)
+                logString = "SUPERTREND VALUE : " + str(round(lastCandleSupertrend,2))
                 self.sendLogReport(logString)
-                logString = "ALLIGATOR JAW VALUE : " + str(lastCandleAlligatorJas)
+                logString = "ALLIGATOR JAW VALUE : " + str(round(lastCandleAlligatorJas,2))
                 self.sendLogReport(logString)
                 logString = '----------------------------------'
                 self.sendLogReport(logString)
@@ -340,9 +399,9 @@ class LeadCommodities:
         # close file stream
         f.close()
 
-        logData = {"logReport" : self.logReport,"selected_commodities":4}
+        logData = {"logReport" : logString,"selected_commodities":4}
 
-        print(self.logReport)
+        print(logString)
         self.socketio.emit('log_report',logData)
                 
 

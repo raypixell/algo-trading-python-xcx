@@ -19,7 +19,7 @@
         integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
         crossorigin="anonymous"></script>
 
-    <title>Settings</title>
+    <title>Home</title>
 </head>
 
 <body>
@@ -36,7 +36,7 @@
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item ">
+                <li class="nav-item active">
                     <a class="nav-link" href="/">Home </a>
                 </li>
                 <li class="nav-item ">
@@ -45,7 +45,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/bank_nifty">Bank Nifty </a>
                 </li>
-                <li class="nav-item active">
+                <li class="nav-item ">
                     <a class="nav-link" href="/settings">Settings <span class="sr-only">(current)</a>
                 </li>
             </ul>
@@ -58,35 +58,10 @@
             <div class="col-3 m-auto text-center">
             </div>
             <div class="col-6 m-auto text-center">
-                <h3>Update your kite access token</h3>
+                <h3>Welcome to XCS Algo Trading</h3>
             </div>
             <div class="col-3 m-auto text-center">
 
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-3 m-auto text-center">
-
-            </div>
-            <div class="col-6 m-auto text-center">
-                <p id="access_token_status"></p>
-            </div>
-            <div class="col-3 m-auto text-center">
-
-            </div>
-        </div>
-        <br>
-        <div class="row">
-            <div class="col-3 m-auto text-center">
-
-            </div>
-            <div class="col-6 m-auto text-center">
-                <div class="d-flex justify-content-center">
-                    <button type="button" class="btn btn-primary" onclick=updateAccessToken()>Update Access
-                        Token</button>
-                </div>
-            </div>
-            <div class="col-3 m-auto text-center">
             </div>
         </div>
     </div>
@@ -95,19 +70,9 @@
         var socket = io();
 
         socket.on('connect', function () {
-            socket.emit('connected', { data: 'Connected to settings','page':3 });
+            socket.emit('connected', { data: 'Connected to settings','page':0 });
         });
 
-        const updateAccessToken = function () {
-            var access_token_status = document.getElementById('access_token_status');
-            access_token_status.innerHTML = 'Please wait while fetching and updating access token ...'
-            socket.emit('save_access_token');
-        }
-
-        socket.on('access_token_updated', (selectedCommodities) => {
-            var access_token_status = document.getElementById('access_token_status');
-            access_token_status.innerHTML = 'Access token fetched and saved successfully'
-        });
     </script>
 
     <!-- Optional JavaScript -->

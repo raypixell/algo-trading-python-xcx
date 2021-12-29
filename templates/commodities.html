@@ -18,7 +18,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
     integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
     crossorigin="anonymous"></script>
-  <title>Home</title>
+  <title>Commodities</title>
 </head>
 
 <body>
@@ -35,8 +35,14 @@
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav ml-auto">
-        <li class="nav-item active">
+        <li class="nav-item ">
           <a class="nav-link" href="/">Home </a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="/commodities">Commodities </a>
+        </li>
+        <li class="nav-item ">
+          <a class="nav-link" href="/bank_nifty">Bank Nifty </a>
         </li>
         <li class="nav-item ">
           <a class="nav-link" href="/settings">Settings <span class="sr-only">(current)</a>
@@ -158,17 +164,17 @@
     </div>
   </div>
 
-
-
-
-
-
   <script>
     var socket = io();
 
     socket.on('connect', function () {
-      socket.emit('connected', { data: 'I\'m connected!' });
+      socket.emit('connected', { data: 'Connected to commodities', 'page': 1 });
     });
+
+    var goldLogString = '';
+    var silverLogString = '';
+    var naturalGasLogString = '';
+    var leadLogString = '';
 
     const startScript = function () {
       const commodities_selection = document.getElementById("commodities_selection");
@@ -209,22 +215,22 @@
       switch (selectedOptionCommodities) {
         case 1:
           //Gold
-          socket.emit('start_script', { 'startScriptFor': 1, 'selectedInterval': selectedOptionInterval,'intervalValue':intervalValue });
+          socket.emit('start_script', { 'startScriptFor': 1, 'selectedInterval': selectedOptionInterval, 'intervalValue': intervalValue });
           break;
 
         case 2:
           //Silver
-          socket.emit('start_script', { 'startScriptFor': 2, 'selectedInterval': selectedOptionInterval,'intervalValue':intervalValue });
+          socket.emit('start_script', { 'startScriptFor': 2, 'selectedInterval': selectedOptionInterval, 'intervalValue': intervalValue });
           break;
 
         case 3:
           //Natural Gas
-          socket.emit('start_script', { 'startScriptFor': 3, 'selectedInterval': selectedOptionInterval,'intervalValue':intervalValue });
+          socket.emit('start_script', { 'startScriptFor': 3, 'selectedInterval': selectedOptionInterval, 'intervalValue': intervalValue });
           break;
 
         case 4:
           //Lead
-          socket.emit('start_script', { 'startScriptFor': 4, 'selectedInterval': selectedOptionInterval,'intervalValue':intervalValue });
+          socket.emit('start_script', { 'startScriptFor': 4, 'selectedInterval': selectedOptionInterval, 'intervalValue': intervalValue });
           break;
 
         default:
@@ -297,14 +303,11 @@
 
     });
 
-    socket.on('no_log_found', (msg) => {
-      alert(msg);
-    });
-
     socket.on('update_btn_state', (data) => {
       var btnStateJson = JSON.parse(JSON.stringify(data));
       const commodities_selection = document.getElementById("commodities_selection");
       const selectedOption = parseInt(commodities_selection.value);
+
       switch (selectedOption) {
         case 1:
           var golde_btn_state = btnStateJson.Gold;
@@ -369,6 +372,7 @@
 
       var logJson = JSON.parse(JSON.stringify(logMessage));
       var log_message = logJson.logReport;
+      console.log(log_message)
       var selected_commodities = parseInt(logJson.selected_commodities);
 
       const log_report_label = document.getElementById("log_report_label");
@@ -377,33 +381,68 @@
 
       const textarea = document.getElementById('log_report');
 
+      switch (selected_commodities) {
+        case 1:
+          if (isEmpty(goldLogString)) {
+            goldLogString = log_message;
+          } else {
+            goldLogString = goldLogString + '\n' + log_message
+          }
+
+          console.log(goldLogString)
+          break;
+        case 2:
+          if (isEmpty(silverLogString)) {
+            silverLogString = log_message;
+          } else {
+            silverLogString = silverLogString + '\n' + log_message
+          }
+
+          console.log(silverLogString)
+          break;
+        case 3:
+          if (isEmpty(naturalGasLogString)) {
+            naturalGasLogString = log_message;
+          } else {
+            naturalGasLogString = naturalGasLogString + '\n' + log_message
+          }
+
+          console.log(naturalGasLogString)
+          break;
+        case 4:
+          if (isEmpty(leadLogString)) {
+            leadLogString = log_message;
+          } else {
+            leadLogString = leadLogString + '\n' + log_message
+          }
+
+          console.log(leadLogString)
+          break;
+      }
+
       switch (selectedOption) {
         case 1:
           if (selected_commodities == 1) {
-            textarea.value = log_message;
+            textarea.value = goldLogString;
           }
-
           break;
 
         case 2:
           if (selected_commodities == 2) {
-            console.log(log_message);
-            textarea.value = log_message;
+            textarea.value = silverLogString;
           }
           break;
 
         case 3:
           if (selected_commodities == 3) {
-            textarea.value = log_message;
+            textarea.value = naturalGasLogString;
           }
-
           break;
 
         case 4:
           if (selected_commodities == 4) {
-            textarea.value = log_message;
+            textarea.value = leadLogString;
           }
-
           break;
 
         default:

@@ -5,7 +5,6 @@ import pandas_ta as ta
 from tapy import Indicators
 import time
 import json
-import logging
 import os
 import pytz
 
@@ -36,11 +35,14 @@ class GoldCommodities:
 
     DOWNLOAD_LOG_FILE_NAME = None
     tz = pytz.timezone('Asia/Kolkata')
+    currentTime = None
 
+    TERMINATE_GOLD = None
 
     def __init__(self,socketio,selectedInterval):
 
         self.socketio = socketio
+        self.TERMINATE_GOLD = False
 
         # Api key and access token
         with open('access_token.json', 'r') as openfile:
@@ -52,16 +54,10 @@ class GoldCommodities:
         # Log file name
         now = datetime.now()
         now = now.astimezone(self.tz)
-        self.DOWNLOAD_LOG_FILE_NAME = "gold_" + '%s-%s-%s.txt' % (now.day,now.month,now.year)
+        self.DOWNLOAD_LOG_FILE_NAME = "gold_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
         print(self.DOWNLOAD_LOG_FILE_NAME)
 
-        # logger = logging.getLogger()
-        # fhandler = logging.FileHandler(filename=self.file_name, mode='a')
-        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        # fhandler.setFormatter(formatter)
-        # logger.addHandler(fhandler)
-        # logger.setLevel(logging.DEBUG)
-
+        # Log file name
         self.LOG_FILE_NAME = 'commodities_log_gold.xlsx'
         self.REPORT_FILE_NAME = 'commodities_gold.xlsx'
         self.SCRIPT_COMMENT = 'Please wait while checking " GOLD " commodities...'
@@ -80,7 +76,7 @@ class GoldCommodities:
         self.to_date = datetime.today().strftime('%Y-%m-%d')
 
         # commodities instrument token
-        self.tokens ={59627015 : 'GOLDPETAL21DECFUT'}
+        self.tokens ={59844359 : 'GOLDM22JANFUT'}
 
     def getAccessToken(self):
         return self.access_token
@@ -94,22 +90,77 @@ class GoldCommodities:
         self.logMessage = 'Script automatically executed at an interval of ' +"' " +self.candleInterval+" '"
         self.sendLogReport(self.logMessage)
 
-    def startCommoditiesAlgo(self):
+    def stopThread(self):
+        print('stopThread called....')
+        self.TERMINATE_GOLD = True
+
+    def startCommoditiesAlgo(self,timeInterval):
+
+        self.TERMINATE_GOLD = False
+
         try:
-            now = datetime.now()
-            now = now.astimezone(self.tz)
+            while not self.TERMINATE_GOLD:
 
-            logString = 'start checking at : ' + str(now)
-            self.sendLogReport(logString)
+                now = datetime.now()
+                now = now.astimezone(self.tz)
 
-            # Now Checking Commodities
-            self.checkComodities()
+                if timeInterval == 1:
+                    if now.second == 5:
+                        self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                        logString = 'start checking at : ' + str(self.currentTime)
+                        self.sendLogReport(logString)
+
+                        # Now Checking Commodities
+                        time.sleep(1)
+                        self.checkComodities(timeInterval)
+                    
+                elif timeInterval == 5:
+                    if now.second == 5 and now.minute % int(timeInterval) == 0:
+                        self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                        logString = 'start checking at : ' + str(self.currentTime)
+                        self.sendLogReport(logString)
+
+                        # Now Checking Commodities
+                        time.sleep(1)
+                        self.checkComodities(timeInterval)
+                
+                elif timeInterval == 10:
+                    if now.second == 5 and now.minute % int(timeInterval) == 0:
+                        self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                        logString = 'start checking at : ' + str(self.currentTime)
+                        self.sendLogReport(logString)
+
+                        # Now Checking Commodities
+                        time.sleep(1)
+                        self.checkComodities(timeInterval)
+                
+                elif timeInterval == 15:
+                    if now.second == 5 and now.minute % int(timeInterval) == 0:
+                        self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                        logString = 'start checking at : ' + str(self.currentTime)
+                        self.sendLogReport(logString)
+
+                        # Now Checking Commodities
+                        time.sleep(1)
+                        self.checkComodities(timeInterval)
+                
+                elif timeInterval == 30:
+                    if now.second == 5 and now.minute % int(timeInterval) == 0:
+                        self.currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                        logString = 'start checking at : ' + str(self.currentTime)
+                        self.sendLogReport(logString)
+
+                        # Now Checking Commodities
+                        time.sleep(1)
+                        self.checkComodities(timeInterval)
+                          
         except Exception as ex:
             logString = str(ex)
             self.sendLogReport(logString)
             self.socketio.emit('force_stop_script',1)
+                
 
-    def checkComodities(self):
+    def checkComodities(self,timeInterval):
         try:
             commoditiesLogDF = pd.read_excel(self.LOG_FILE_NAME)
         except Exception as ex:
@@ -161,164 +212,192 @@ class GoldCommodities:
             # Buy Condition
 
             # to analyse this first we fetch last candle
-            lastCandle = commoditiesDF.iloc[-1]
-            lastCandleClose = lastCandle['close']
-            lastCandleSupertrend = lastCandle['supertrend']
-            lastCandleAlligatorJas = lastCandle['alligator_jaws']
-        
-            secondLastCandle = commoditiesDF.iloc[-2]
-            secondLastCandleClose = secondLastCandle['close']
-            secondLastCandleOpen = secondLastCandle['open']
-            secondLastCandleHigh = secondLastCandle['high']
-            secondLastCandleLow = secondLastCandle['low']
-            secondLastAligatorJaw = secondLastCandle['alligator_jaws']
+            triggeredCandle = commoditiesDF.iloc[-1]
+            
+            # Fetch open,close,high,low
+            triggeredCandleOpen = triggeredCandle['open']
+            triggeredCandleClose = triggeredCandle['close']
+            triggeredCandleHigh = triggeredCandle['high']
+            triggeredCandleLow = triggeredCandle['low']
 
-            if lastCandleClose > lastCandleSupertrend:
+            # Fetch alligator jaw and supertrend
+            triggeredCandleSupertrend = triggeredCandle['supertrend']
+            triggeredCandleAlligatorJaw = triggeredCandle['alligator_jaws']
+
+            # Now check triggered candle super trend is green or not
+            if triggeredCandleClose > triggeredCandleSupertrend:
                 logString = 'SUPER_TREND : GREEN'
                 self.sendLogReport(logString)
 
-                # check alligator jaw
-                # -------------------
-                # case 1 :
-                # -------------------
-                # alligator jaw must cross the body of candle
-                # alligator jaw must be between candle open and close
-                # -------------------
-                # case 2 :
-                # -------------------
-                # then we can buy on high of second last candle
-                # means last candle close must be equat to or greater than secondlast candle high
-                # stop loss = last candle low
+                # Now Check Alligator Jaw Condition 
+                # Alligator Jaw must cross the body of candle
+                # Means Alligator Jaw line must be between triggered candle open and close
+                # Thinking Candle would be bullish
 
-                if ((secondLastCandleOpen < secondLastAligatorJaw) and (secondLastCandleClose > secondLastAligatorJaw)) and (lastCandleClose >= secondLastCandleHigh):
-                    isTraded = True
-
-                    order_id = self.kite.place_order(variety=kite.VARIETY_REGULAR,    
-                            exchange='MCX',
-                            tradingsymbol=self.tokens[token],
-                            transaction_type=kite.TRANSACTION_TYPE_BUY,
-                            quantity=self.quantity,
-                            product='MIS',
-                            order_type='SL-M',
-                            trigger_price=str(lastCandle['low']),
-                            tag='XCS')
-                    
-                    # Send Log Info to Connected Client
-                    logString ='***************************'
+                if triggeredCandleAlligatorJaw > triggeredCandleOpen and triggeredCandleAlligatorJaw < triggeredCandleClose:
+                    logString ='TRIGGER CANDLE FOUND : BUY SIGNAL'
                     self.sendLogReport(logString)
-                    logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
-                    self.sendLogReport(logString)
-                    logString ='***************************'
-                    self.sendLogReport(logString)
-                    logString ='# BUY SIGNAL #'
-                    self.sendLogReport(logString)
-                    logString ='ORDER ID : ' + str(order_id)
-                    self.sendLogReport(logString)
-                    logString ='CLOSE PRICE : ' + str(lastCandle['close'])
-                    self.sendLogReport(logString)
-                    logString ='STOP LOSS : ' + str(lastCandle['low'])
+                    logString ='Please wait , now looking for trade ... '
                     self.sendLogReport(logString)
 
-                    # generating log
-                    # creating dictonary 
-                    now = datetime.now()
-                    now = now.astimezone(self.tz)
+                    # check for trade
+                    NEED_TO_EXIT_TRADE_LOOP = False
+                    while not NEED_TO_EXIT_TRADE_LOOP:
+                        now = datetime.now()
+                        now = now.astimezone(self.tz)
 
-                    logDict = {'date':str(now),
+                        if timeInterval == 1:
+                            if now.second == 0:
+                                NEED_TO_EXIT_TRADE_LOOP = True
+                        else:
+                            if now.second == 0 and now.minute % int(timeInterval) == 0:
+                                NEED_TO_EXIT_TRADE_LOOP = True
+                        
+                        symbol = "MCX:{}".format(str(self.tokens[token]))
+                        ltp = self.kite.ltp([symbol])
+                        latestPrice = ltp[symbol]['last_price']
+
+                        # To make a trade 
+                        # ltp must cross high of the triggered candle
+
+                        if latestPrice > triggeredCandleHigh:
+                            # Place Order
+                            order_id = 'TEST_GOLD_BUY_1234'
+
+                            # Send log about trade executed time
+                            tradeExecutedTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                            logString = 'TRADE EXECUTED At : ' + str(tradeExecutedTime)
+                            self.sendLogReport(logString)
+
+                            # Print log report to console
+                            logString = '***************************'
+                            self.sendLogReport(logString)
+                            logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
+                            self.sendLogReport(logString)
+                            logString ='***************************'
+                            self.sendLogReport(logString)
+                            logString ='# BUY SIGNAL #'
+                            self.sendLogReport(logString)
+                            logString ='ORDER ID : ' + str(order_id)
+                            self.sendLogReport(logString)
+                            logString ='CLOSE PRICE : ' + str(round(triggeredCandleClose,2))
+                            self.sendLogReport(logString)
+                            logString ='STOP LOSS : ' + str(round(triggeredCandleLow,2))
+                            self.sendLogReport(logString)
+
+                            # generating log
+                            # creating dictonary 
+                            logDict = {'date':str(tradeExecutedTime),
                             'tradingsymbol':self.tokens[token],
                             'order_id':order_id,
-                            'open': lastCandle['open'],
-                            'close':lastCandle['close'],
-                            'high':lastCandle['high'],
-                            'low':lastCandle['low'],
+                            'open': round(triggeredCandleOpen,2),
+                            'close':round(triggeredCandleClose,2),
+                            'high':round(triggeredCandleHigh,2),
+                            'low':round(triggeredCandleLow,2),
                             'signal':'BUY',
-                            'stop_loss':lastCandle['low']}
+                            'stop_loss':round(triggeredCandleLow,2)}
                 
-                    commoditiesLogList.append(logDict)
-                    logDF = pd.DataFrame(commoditiesLogList)
+                            self.commoditiesLogList.append(logDict)
+                            logDF = pd.DataFrame(self.commoditiesLogList)
                 
-                    log = pd.concat([commoditiesLogDF,logDF],axis=1)
-                    log.to_excel(self.LOG_FILE_NAME)
+                            log = pd.concat([commoditiesLogDF,logDF],axis=1)
+                            log.to_excel(self.LOG_FILE_NAME)
 
-            elif lastCandleSupertrend > lastCandleClose:
+                            NEED_TO_EXIT_TRADE_LOOP = True
+                            isTraded = True
+
+            # Now check triggered candle super trend is red or not
+            elif triggeredCandleSupertrend > triggeredCandleClose:
                 logString = 'SUPER_TREND : RED'
                 self.sendLogReport(logString)
 
-                # check aligator jaw
-                # -------------------
-                # case 1 :
-                # -------------------
-                # alligator jaw must cross the body of candle
-                # alligator jaw must be between candle open and close
-                # -------------------
-                # case 2 :
-                # -------------------
-                # then we can sell on low of second last candle
-                # means last candle close must be equat to or less than secondlast candle high
-                # stop loss = last candle high
+                # Now Check Alligator Jaw Condition 
+                # Alligator Jaw must cross the body of candle
+                # Means Alligator Jaw line must be between triggered candle open and close
+                # Thinking Candle would be bearish
 
-                if ((secondLastCandleOpen > secondLastAligatorJaw) and (secondLastCandleClose < secondLastAligatorJaw)) and (lastCandleClose <= secondLastCandleLow):
-                    isTraded = True
-
-                    order_id = self.kite.place_order(variety=kite.VARIETY_REGULAR,
-                            exchange ='MCX',
-                            tradingsymbol =self.tokens[token],
-                            transaction_type = kite.TRANSACTION_TYPE_SELL,
-                            quantity = self.quantity,
-                            product = 'MIS',
-                            order_type = 'SL-M',
-                            trigger_price = str(lastCandle['high']),
-                            tag='XCS')
-
-                    logString = '***************************'
+                if triggeredCandleOpen > triggeredCandleAlligatorJaw and triggeredCandleClose < triggeredCandleAlligatorJaw:
+                    logString ='TRIGGER CANDLE FOUND : SELL SIGNAL'
                     self.sendLogReport(logString)
-                    logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
-                    self.sendLogReport(logString)
-                    logString ='***************************'
-                    self.sendLogReport(logString)
-                    logString ='# SELL SIGNAL #'
-                    self.sendLogReport(logString)
-                    logString ='ORDER ID : ' + str(order_id)
-                    self.sendLogReport(logString)
-                    logString ='CLOSE PRICE : ' + str(lastCandle['close'])
-                    self.sendLogReport(logString)
-                    logString ='STOP LOSS : ' + str(lastCandle['high'])
+                    logString ='Please wait , now looking for trade ... '
                     self.sendLogReport(logString)
 
-                    # generating log
-                    # creating dictonary 
-                    now = datetime.now()
-                    now = now.astimezone(self.tz)
-                    logDict = {'date':str(now),
+                    # check for trade
+                    NEED_TO_EXIT_TRADE_LOOP = False
+                    while not NEED_TO_EXIT_TRADE_LOOP:
+                        now = datetime.now()
+                        now = now.astimezone(self.tz)
+
+                        if timeInterval == 1:
+                            if now.second == 0:
+                                NEED_TO_EXIT_TRADE_LOOP = True
+                        else:
+                            if now.second == 0 and now.minute % int(timeInterval) == 0:
+                                NEED_TO_EXIT_TRADE_LOOP = True
+                        
+                        symbol = "MCX:{}".format(str(self.tokens[token]))
+                        ltp = self.kite.ltp([symbol])
+                        latestPrice = ltp[symbol]['last_price']
+
+                        # To make a trade 
+                        # ltp must cross low of the triggered candle
+
+                        if latestPrice < triggeredCandleLow:
+                            # Place Order
+                            order_id = 'TEST_GOLD_SELL_1234'
+
+                            # Send log about trade executed time
+                            tradeExecutedTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+                            logString = 'TRADE EXECUTED At : ' + str(tradeExecutedTime)
+                            self.sendLogReport(logString)
+
+                            logString = '***************************'
+                            self.sendLogReport(logString)
+                            logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
+                            self.sendLogReport(logString)
+                            logString ='***************************'
+                            self.sendLogReport(logString)
+                            logString ='# SELL SIGNAL #'
+                            self.sendLogReport(logString)
+                            logString ='ORDER ID : ' + str(order_id)
+                            self.sendLogReport(logString)
+                            logString ='CLOSE PRICE : ' + str(round(triggeredCandleClose,2))
+                            self.sendLogReport(logString)
+                            logString ='STOP LOSS : ' + str(round(triggeredCandleHigh,2))
+                            self.sendLogReport(logString)
+
+                            # generating log
+                            # creating dictonary
+                            logDict = {'date':str(tradeExecutedTime),
                             'tradingsymbol':self.tokens[token],
                             'order_id':order_id,
-                            'open': lastCandle['open'],
-                            'close':lastCandle['close'],
-                            'high':lastCandle['high'],
-                            'low':lastCandle['low'],
+                            'open': round(triggeredCandleOpen,2),
+                            'close':round(triggeredCandleClose,2),
+                            'high':round(triggeredCandleHigh,2),
+                            'low':round(triggeredCandleLow,2),
                             'signal':'SELL',
-                            'stop_loss':lastCandle['high']}
+                            'stop_loss':round(triggeredCandleHigh,2)}
                 
-                    commoditiesLogList.append(logDict)
-                    logDF = pd.DataFrame(commoditiesLogList)
+                            self.commoditiesLogList.append(logDict)
+                            logDF = pd.DataFrame(self.commoditiesLogList)
                 
-                    log = pd.concat([commoditiesLogDF,logDF],axis=1)
-                    log.to_excel(self.LOG_FILE_NAME)
+                            log = pd.concat([commoditiesLogDF,logDF],axis=1)
+                            log.to_excel(self.LOG_FILE_NAME)
 
-            
+                            NEED_TO_EXIT_TRADE_LOOP = True
+                            isTraded = True
+
             if not isTraded:
                 logString ='TRADINGSYMBOL : ' + str(self.tokens[token])
                 self.sendLogReport(logString)
-                logString ='CLOSE PRICE : ' + str(lastCandle['close'])
+                logString ='CLOSE PRICE : ' + str(round(triggeredCandleClose,2))
                 self.sendLogReport(logString)
-                logString = "SUPERTREND VALUE : " + str(lastCandleSupertrend)
+                logString = "SUPERTREND VALUE : " + str(round(triggeredCandleSupertrend,2))
                 self.sendLogReport(logString)
-                logString = "ALLIGATOR JAW VALUE : " + str(lastCandleAlligatorJas)
+                logString = "ALLIGATOR JAW VALUE : " + str(round(triggeredCandleAlligatorJaw,2))
                 self.sendLogReport(logString)
                 logString = '----------------------------------'
                 self.sendLogReport(logString)
-
-            time.sleep(1)
     
         if not isTraded:
             logString = 'No trade this session...'
@@ -341,24 +420,7 @@ class GoldCommodities:
         # close file stream
         f.close()
 
-        # read the txt file and get content
-        f=open(self.DOWNLOAD_LOG_FILE_NAME, "r")
-        if f.mode == 'r':
-            self.logReport =f.read()
-        
-        # close file stream
-        f.close()
+        logData = {"logReport" : logString,"selected_commodities":1}
 
-        logData = {"logReport" : self.logReport,"selected_commodities":1}
-
-        print(self.logReport)
+        print(logString)
         self.socketio.emit('log_report',logData)
-
-
-                
-
-            
-            
-        
-
-    

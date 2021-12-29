@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <!-- Bootstrap ICONS [Hide Show Cloud Icons , Remove below code whenever want to remove icon]-->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css"
+        integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+
+    <!-- Socket IO Connection-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+        crossorigin="anonymous"></script>
+    <title>Bank Nifty</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+
+        <a class="navbar-brand" href="#">
+            <i class="fas fa-cloud"></i>
+            XCS ALGO TRADING
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item ">
+                    <a class="nav-link" href="/">Home </a>
+                </li>
+                <li class="nav-item ">
+                    <a class="nav-link" href="/commodities">Commodities </a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="/bank_nifty">Bank Nifty </a>
+                </li>
+                <li class="nav-item ">
+                    <a class="nav-link" href="/settings">Settings <span class="sr-only">(current)</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <br>
+    <div class="container">
+        <div class="row">
+            <div class="card" style="width: 100%;">
+
+                <div class="card-header">
+                    <div class="text-center">
+                        <blockquote class="blockquote mb-0">
+                            <p>Welcome to Bank Nifty Algo</p>
+                            <footer class="blockquote-footer"><cite title="Source Title">This algo is based on EMA5</cite>
+                            </footer>
+                        </blockquote>
+                        <br>
+                        <p class="card-subtitle mb-2 text-muted" style="font-size:80%;">This is sell only script .
+                            Trigger candle low must be above EMA5 and next candle must cross low of trigged candle.
+                            Stop loss would be triggerd candle high. RR would be 1:2 </p>
+                    </div>
+
+                </div>
+
+                <div class="card-body">
+                    <div class="container-fluid text-right">
+                        <div class="row">
+                            <div class="col-2 m-auto text-right">
+
+                            </div>
+                            <div class="col-3 m-auto text-right">
+                            </div>
+                            <div class="col-1 m-auto text-right">
+                                <button type="button" id="start" class="btn btn-outline-success btn-sm"
+                                    onclick="startScript()">Start
+                                    Script</button>
+                            </div>
+                            <div class="col-1 m-auto text-right">
+                                <button type="button" id="stop" class="btn btn-outline-danger btn-sm"
+                                    onclick="stopScript()">Stop
+                                    Script</button>
+                            </div>
+                            <div class="col-3 m-auto text-right">
+                            </div>
+                            <div class="col-2 m-auto text-right">
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <br>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12">
+                                <label id="log_report_label" for="log_report" class="form-label">Trading Report</label>
+                                <textarea class="form-control" id="log_report" rows="10"
+                                    style="min-width: 100%"></textarea>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row">
+                            <div class="col-10">
+                            </div>
+                            <div class="col-2 m-auto text-right">
+                                <a id="download_log_anchor" href="#">
+                                    <button type="button" id="download" class="btn btn-outline-success btn-sm"
+                                        onclick="downloadLog()">Download Log</button>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+
+
+    <script>
+        var logString = '';
+        var socket = io();
+
+        socket.on('connect', function () {
+            socket.emit('connected', { data: 'Connected to bank nifty', 'page': 2 });
+        });
+
+        const startScript = function () {
+            socket.emit('start_bank_nifty_script', { 'ema': 5, 'is_started': true });
+        }
+
+        const stopScript = function () {
+            socket.emit('stop_bank_nifty_script', { 'ema': 5, 'is_started': false });
+        }
+
+        socket.on('update_btn_state_nifty', (data) => {
+            var btnStateJson = JSON.parse(JSON.stringify(data));
+            var bank_nifty_btn_state = btnStateJson.Bank_Nifty;
+            var startBtn = document.getElementById('start')
+            var stopBtn = document.getElementById('stop');
+
+            if (bank_nifty_btn_state) {
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } else {
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+
+        });
+
+        socket.on('force_stop_bank_nifty_script', function () {
+            socket.emit('stop_bank_nifty_script', { 'ema': 5, 'is_started': false });
+        });
+
+        socket.on('log_report_bank_nifty', (logMessage) => {
+
+            var logJson = JSON.parse(JSON.stringify(logMessage));
+            var log_message = logJson.logReport;
+            console.log(log_message)
+
+            if (isEmpty(logString)) {
+                logString = log_message;
+            } else {
+                logString = logString + '\n' + log_message
+            }
+
+            const textarea = document.getElementById('log_report');
+            textarea.value = logString;
+
+            scrollTextAreatToBottom();
+
+        });
+
+        function scrollTextAreatToBottom() {
+            var textarea = document.getElementById('log_report');
+            textarea.scrollTop = textarea.scrollHeight;
+        }
+
+        function isEmpty(str) {
+            return (!str || str.length === 0);
+        }
+
+        const downloadLog = function () {
+            var log_anchor = document.getElementById('download_log_anchor');
+            log_anchor.href = "{{ url_for('download',selectedCommodities=5) }}";
+        }
+
+
+    </script>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous">
+        </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous">
+        </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
+        </script>
+</body>
+
+</html>
