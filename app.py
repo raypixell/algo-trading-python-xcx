@@ -36,7 +36,7 @@ bankNifty = None
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abcdefghijklmnopqrstuvwxyzVIKASJHA'
-socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*")
+socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*",async_mode='gevent')
 tz = pytz.timezone('Asia/Kolkata')
 
 @app.route("/", methods=['POST', 'GET'])
