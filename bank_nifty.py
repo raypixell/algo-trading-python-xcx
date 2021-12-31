@@ -147,12 +147,12 @@ class BankNifty:
 
                     if (thursday == lastThursday):
                         # Look For Monthly Option Contract
-                        self.options_token = self.tradeSymbol + yearLabel + self.monthlyContractOptionFlag[fetching_month-1]+str(self.strikePrice)+'CE'
+                        self.options_token = self.tradeSymbol + yearLabel + self.monthlyContractOptionFlag[fetching_month-1]
                         self.isWeeklyOption = False
                     else:
                         # Look For Weekly Option Contract
                         # year: 2 digit , month: 1 digit except OCT,NOV,DEC , date: always 2 digit
-                        self.options_token = self.tradeSymbol+ yearLabel+str(fetching_month) + str('%02d' % thursday)+str(self.strikePrice)+'CE'
+                        self.options_token = self.tradeSymbol+ yearLabel+str(fetching_month) + str('%02d' % thursday)
                         self.isWeeklyOption = True
 
                     if self.isWeeklyOption:
