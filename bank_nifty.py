@@ -44,58 +44,160 @@ class BankNifty:
         self.to_date = datetime.today().strftime('%Y-%m-%d')
 
         # bank nifty instrument token
-        self.tokens ={18257666 : 'BANKNIFTY21DECFUT'}
+        self.tokens = None
+        self.logReport = None
+        self.TERMINATE_BANK_NIFTY = None
+
+        # trading symbol constants
+        self.monthlyContractOptionFlag = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
+        self.tradeSymbol = 'BANKNIFTY'
+        self.tradingSymbol = None
         self.options_token = None
-
-        # find options expiry flag
-        month = calendar.monthcalendar(now.year, now.month)
-        today = now.day
-
-        if len(month) > 4:
-            # week have 5 thursday 
-            # so leave first and last one
-            firstThursday = month[0][calendar.THURSDAY]
-            print('firstThursday : {}'.format(firstThursday))
-
-            lastThursday = month[-1][calendar.THURSDAY]
-            print('lastThursday : {}'.format(lastThursday))
-
-            for i in range(len(month)):
-                thursday = month[i][calendar.THURSDAY]
-                if thursday > today :
-                    if (thursday == firstThursday) or (thursday == lastThursday):
-                        self.options_token = 'BANKNIFTY21DEC'
-                    else:
-                        self.options_token = 'BANKNIFTY21D{}'.format(thursday)
-
-                    print(self.options_token)
-                    break
-        else:
-            lastThursday = month[-1][calendar.THURSDAY]
-            print('lastThursday : {}'.format(lastThursday))
-
-            for i in range(len(month)):
-                thursday = month[i][calendar.THURSDAY]
-                if thursday > today :
-                    if (thursday == lastThursday):
-                        self.options_token = 'BANKNIFTY21DEC'
-                    else:
-                        self.options_token = 'BANKNIFTY21D{}'.format(thursday)
-            
-                    print(self.options_token)
-                    break
+        self.option_instrument_token = None
+        self.option_lot_size = None
+        self.option_exchange = None
+        self.isWeeklyOption = False
 
         # Log String
         self.logMessage = 'Bank Nifty Script Started...'
         self.sendLogReport(self.logMessage)
         self.logMessage = 'Script automatically executed at an interval of ' +"' " +self.candleInterval+" '"
         self.sendLogReport(self.logMessage)
+
+        # generate Trading Tokens
+        self.generateTradingTokens(now.day,now.month,now.year)
         
-        self.option_instrument_token = None
-        self.option_lot_size = None
-        self.option_exchange = None
-        self.logReport = None
-        self.TERMINATE_BANK_NIFTY = None
+    def generateTradingTokens(self,current_day,fetching_month,fetching_year):
+        # Fetching Months
+        month = calendar.monthcalendar(fetching_year, fetching_month)
+        thursdayList = []
+        for i in range(len(month)):
+            thursday = month[i][calendar.THURSDAY]
+            if thursday != 0:
+                thursdayList.append(thursday)
+        
+        if len(thursdayList) > 4:
+            # week have 5 thursday 
+            isMonthlyOptionExpired = True
+
+            for i in range(len(thursdayList)):
+                thursday = thursdayList[i]
+                if thursday > current_day:
+                    # so leave first and last one
+                    firstThursday = thursdayList[0]
+                    print('firstThursday : {}'.format(firstThursday))
+
+                    lastThursday = thursdayList[-1]
+                    print('pickedThursday : {}'.format(thursday))
+
+                    yearLabel = str(fetching_year)
+                    yearLabel = yearLabel[-2:]
+                    self.tradingSymbol = self.tradeSymbol + yearLabel + self.monthlyContractOptionFlag[fetching_month-1] + 'FUT'
+                    print('MAIN TRADING SYMBOL : {}'.format(self.tradingSymbol))
+
+                    if (thursday == firstThursday) or (thursday == lastThursday):
+                        # Look For Monthly Option Contract
+                        self.options_token = self.tradeSymbol + yearLabel + self.monthlyContractOptionFlag[fetching_month-1]
+                        self.isWeeklyOption = False
+                    else:
+                        # Look For Weekly Option Contract
+                        # year: 2 digit , month: 1 digit except OCT,NOV,DEC , date: always 2 digit
+                        self.options_token = self.tradeSymbol+ yearLabel+str(fetching_month) + str('%02d' % thursday)
+                        self.isWeeklyOption = True
+                        
+                    if self.isWeeklyOption:
+                        print('WEEKLY OPTIONS TRADING SYMBOL : {}'.format(self.options_token))
+                    else:
+                        print('MONTHLY OPTIONS TRADING SYMBOL : {}'.format(self.options_token))
+
+                    isMonthlyOptionExpired = False
+                    break
+
+            if isMonthlyOptionExpired:
+                print('Current month future expired ! Switching to next month')
+                # Change Month
+                # If Current Month Is DEC Then Change MONTH TO NEW YEAR
+                if fetching_month ==12:
+                    # Change Year , Change Month
+                    fetchingYear = fetching_year +1
+                    # In this case new month always would be JAN
+                    fetchingMonth = 1
+                else:
+                    # keey the year same
+                    fetchingYear = fetching_year
+                    # change month only
+                    fetchingMonth = fetching_month+1
+        
+                # So Fetch Again
+                self.generateTradingTokens(1,fetchingMonth,fetchingYear)
+        else:
+            # Its a 4 week month
+            isMonthlyOptionExpired = True
+        
+            for i in range(len(thursdayList)):
+                thursday = thursdayList[i]
+                if thursday > current_day :
+                    lastThursday = thursdayList[-1]
+                    print('pickedThursday : {}'.format(thursday))
+
+                    yearLabel = str(fetching_year)
+                    yearLabel = yearLabel[-2:]
+                    self.tradingSymbol = self.tradeSymbol + yearLabel + self.monthlyContractOptionFlag[fetching_month-1] + 'FUT'
+                    print('MAIN TRADING SYMBOL : {}'.format(self.tradingSymbol))
+
+                    if (thursday == lastThursday):
+                        # Look For Monthly Option Contract
+                        self.options_token = self.tradeSymbol + yearLabel + self.monthlyContractOptionFlag[fetching_month-1]+str(self.strikePrice)+'CE'
+                        self.isWeeklyOption = False
+                    else:
+                        # Look For Weekly Option Contract
+                        # year: 2 digit , month: 1 digit except OCT,NOV,DEC , date: always 2 digit
+                        self.options_token = self.tradeSymbol+ yearLabel+str(fetching_month) + str('%02d' % thursday)+str(self.strikePrice)+'CE'
+                        self.isWeeklyOption = True
+
+                    if self.isWeeklyOption:
+                        print('WEEKLY OPTIONS TRADING SYMBOL : {}'.format(self.options_token))
+                    else:
+                        print('MONTHLY OPTIONS TRADING SYMBOL : {}'.format(self.options_token))
+
+                    isMonthlyOptionExpired = False
+                    break
+
+            if isMonthlyOptionExpired:
+                print('Current month future expired ! Switching to next month')
+                # Change Month
+                # If Current Month Is DEC Then Change MONTH TO NEW YEAR
+                if fetching_month ==12:
+                    # Change Year , Change Month
+                    fetchingYear = fetching_year +1
+                    # In this case new month always would be JAN
+                    fetchingMonth = 1
+                else:
+                    # keep the year same
+                    fetchingYear = fetching_year
+                    # change month only
+                    fetchingMonth = fetching_month + 1
+        
+                # So Fetch Again
+                self.generateTradingTokens(1,fetchingMonth,fetchingYear)
+
+        if not isMonthlyOptionExpired:
+            try:
+                instrumentList =self.kite.instruments(exchange="NFO")
+                for instrument in instrumentList:
+                    trading_Symbol = str(instrument['tradingsymbol'])
+                    
+                    if self.tradingSymbol in trading_Symbol:
+                        instrument_token = instrument['instrument_token']
+                        self.tokens = {}
+                        self.tokens[instrument_token] = self.tradingSymbol
+                        print('MAIN TRADING TOKEN : {}'.format(self.tokens))
+                        isTradingTokenFound = True
+                        break
+            
+                print('--------- END FETCHING INSTRUMENT LIST ---------------')
+            except Exception as e:
+                print(e)
 
     def stopThread(self):
         print('stop Bank Nifty Thread called....')
@@ -190,8 +292,6 @@ class BankNifty:
                     symbol = "NFO:{}".format(str(self.tokens[token]))
                     ltp = self.kite.ltp([symbol])
                     latestPrice = ltp[symbol]['last_price']
-
-                    print('we are fetching ltp for trade : {}'.format(latestPrice))
 
                     if triggerCandleLow > latestPrice:
 

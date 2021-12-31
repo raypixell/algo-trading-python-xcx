@@ -1,144 +1,205 @@
 from kiteconnect import KiteConnect
 from datetime import datetime,timedelta
+import pandas as pd
 import calendar
 import pytz
 import os
 
-tz = pytz.timezone('Asia/Kolkata')
+class OptionsTradingSymbols:
 
-api_key = '9fua69n6l7whujs5'
-access_token = 'CAou8OlEuZWpVyqB8KSweht61mfT5N6w'
+    def __init__(self):
+        self.tz = pytz.timezone('Asia/Kolkata')
 
-kite = KiteConnect(api_key=api_key,timeout=20)
-kite.set_access_token(access_token)
+        self.api_key = '9fua69n6l7whujs5'
+        self.access_token = '9yQ3GUGiQ74c8mepSreb95vXEH0YhF6L'
 
-# tokens ={18257666 : 'BANKNIFTY21DECFUT'}
-# tokens ={59844359 : 'GOLDM22JANFUT'}
-# for token in tokens:
-#     symbol = "MCX:{}".format(str(tokens[token]))
-#     print(symbol)
-#     ltp = kite.ltp([symbol])
-#     print(ltp)
-#     print(ltp[symbol]['last_price'])
+        self.kite = KiteConnect(api_key=self.api_key,timeout=20)
+        self.kite.set_access_token(self.access_token)
 
-# instrumentList =kite.instruments(exchange="NFO")
-
-# for instrument in instrumentList:
-#     now = datetime.now()
-#     now = now.astimezone(tz)
-#     NIFTY_FILE_NAME = "bank_nifty_instrument_nfo_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
-
-#     logString = str(instrument['tradingsymbol']) + ' : ' + str(instrument['instrument_token'])
-
-#     # write logReport to txt file
-#     f=open(NIFTY_FILE_NAME, "a+")
-#     filesize = os.path.getsize(NIFTY_FILE_NAME)
-#     if filesize == 0:
-#         f.write(logString)
-#     else:
-#         f.write('\n'+logString)
+        self.monthlyContractOptionFlag = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
         
-#     # close file stream
-#     f.close()
+        self.tradeSymbol = 'BANKNIFTY'
+        self.high = 34801.95
+        self.strikePrice = None
+        self.tradingSymbol = None
+        self.options_token = None
+        self.isWeeklyOption = False
 
-#     print(logString)
+    def roundup(self,x):
+        return x if x % 100 == 0 else x + 100 - x % 100
 
-# -------------------------------------------------------------------------------
-def roundup(x):
-    return x if x % 100 == 0 else x + 100 - x % 100
+    def generateStrikePrice(self):
+        roundupNum = self.roundup(int(self.high))
+        if (roundupNum - int(self.high)) > 50:
+            self.strikePrice = roundupNum
+        else:
+            self.strikePrice = roundupNum + 100
+    
+        print('STRIKE PRICE : {}'.format(self.strikePrice))
 
-high = 34801.95
-roundupNum = roundup(int(high))
-if (roundupNum - int(high)) > 50:
-    strikePrice = roundupNum
-else:
-    strikePrice = roundupNum + 100
+    def generateTradingTokens(self,current_day,fetching_month,fetching_year):
+        # Fetching Months
+        month = calendar.monthcalendar(fetching_year, fetching_month)
+        thursdayList = []
+        for i in range(len(month)):
+            thursday = month[i][calendar.THURSDAY]
+            if thursday != 0:
+                thursdayList.append(thursday)
+        
+        if len(thursdayList) > 4:
+            # week have 5 thursday 
+            isMonthlyOptionExpired = True
 
-month = calendar.monthcalendar(datetime.today().year, datetime.today().month)
-today = datetime.today().day
+            for i in range(len(thursdayList)):
+                thursday = thursdayList[i]
+                if thursday > current_day:
+                    # so leave first and last one
+                    firstThursday = thursdayList[0]
+                    print('firstThursday : {}'.format(firstThursday))
 
-thursday = None
-options_token = None
+                    lastThursday = thursdayList[-1]
+                    print('pickedThursday : {}'.format(thursday))
 
-if len(month) > 4:
-    # week have 5 thursday 
-    # so leave first and last one
-    firstThursday = month[0][calendar.THURSDAY]
-    print('firstThursday : {}'.format(firstThursday))
+                    yearLabel = str(fetching_year)
+                    yearLabel = yearLabel[-2:]
+                    self.tradingSymbol = self.tradeSymbol + yearLabel + self.monthlyContractOptionFlag[fetching_month-1] + 'FUT'
+                    print('MAIN TRADING SYMBOL : {}'.format(self.tradingSymbol))
 
-    lastThursday = month[-1][calendar.THURSDAY]
-    print('lastThursday : {}'.format(lastThursday))
+                    if (thursday == firstThursday) or (thursday == lastThursday):
+                        # Look For Monthly Option Contract
+                        self.options_token = self.tradeSymbol + yearLabel + self.monthlyContractOptionFlag[fetching_month-1]+str(self.strikePrice)+'CE'
+                        self.isWeeklyOption = False
+                    else:
+                        # Look For Weekly Option Contract
+                        # year: 2 digit , month: 1 digit except OCT,NOV,DEC , date: always 2 digit
+                        self.options_token = self.tradeSymbol+ yearLabel+str(fetching_month) + str('%02d' % thursday)+str(self.strikePrice)+'CE'
+                        self.isWeeklyOption = True
+                        
+                    if self.isWeeklyOption:
+                        print('WEEKLY OPTIONS TRADING SYMBOL : {}'.format(self.options_token))
+                    else:
+                        print('MONTHLY OPTIONS TRADING SYMBOL : {}'.format(self.options_token))
 
-    for i in range(len(month)):
-        thursday = month[i][calendar.THURSDAY]
-        if thursday > today :
-            if (thursday == firstThursday) or (thursday == lastThursday):
-                options_token = 'BANKNIFTY21DEC{}CE'.format(strikePrice)
-            else:
-                options_token = 'BANKNIFTY21D{}{}CE'.format(thursday).format(strikePrice)
+                    isMonthlyOptionExpired = False
+                    break
+
+            if isMonthlyOptionExpired:
+                print('Current month future expired ! Switching to next month')
+                # Change Month
+                # If Current Month Is DEC Then Change MONTH TO NEW YEAR
+                if fetching_month ==12:
+                    # Change Year , Change Month
+                    fetchingYear = fetching_year +1
+                    # In this case new month always would be JAN
+                    fetchingMonth = 1
+                else:
+                    # keey the year same
+                    fetchingYear = fetching_year
+                    # change month only
+                    fetchingMonth = fetching_month+1
+        
+                # So Fetch Again
+                self.generateTradingTokens(1,fetchingMonth,fetchingYear)
+        else:
+            # Its a 4 week month
+            isMonthlyOptionExpired = True
+        
+            for i in range(len(thursdayList)):
+                thursday = thursdayList[i]
+                if thursday > current_day :
+                    lastThursday = thursdayList[-1]
+                    print('pickedThursday : {}'.format(thursday))
+
+                    yearLabel = str(fetching_year)
+                    yearLabel = yearLabel[-2:]
+                    self.tradingSymbol = self.tradeSymbol + yearLabel + self.monthlyContractOptionFlag[fetching_month-1] + 'FUT'
+                    print('MAIN TRADING SYMBOL : {}'.format(self.tradingSymbol))
+
+                    if (thursday == lastThursday):
+                        # Look For Monthly Option Contract
+                        self.options_token = self.tradeSymbol + yearLabel + self.monthlyContractOptionFlag[fetching_month-1]+str(self.strikePrice)+'CE'
+                        self.isWeeklyOption = False
+                    else:
+                        # Look For Weekly Option Contract
+                        # year: 2 digit , month: 1 digit except OCT,NOV,DEC , date: always 2 digit
+                        self.options_token = self.tradeSymbol+ yearLabel+str(fetching_month) + str('%02d' % thursday)+str(self.strikePrice)+'CE'
+                        self.isWeeklyOption = True
+
+                    if self.isWeeklyOption:
+                        print('WEEKLY OPTIONS TRADING SYMBOL : {}'.format(self.options_token))
+                    else:
+                        print('MONTHLY OPTIONS TRADING SYMBOL : {}'.format(self.options_token))
+
+                    isMonthlyOptionExpired = False
+                    break
+
+            if isMonthlyOptionExpired:
+                print('Current month future expired ! Switching to next month')
+                # Change Month
+                # If Current Month Is DEC Then Change MONTH TO NEW YEAR
+                if fetching_month ==12:
+                    # Change Year , Change Month
+                    fetchingYear = fetching_year +1
+                    # In this case new month always would be JAN
+                    fetchingMonth = 1
+                else:
+                    # keep the year same
+                    fetchingYear = fetching_year
+                    # change month only
+                    fetchingMonth = fetching_month + 1
+        
+                # So Fetch Again
+                self.generateTradingTokens(1,fetchingMonth,fetchingYear)
+
+        if not isMonthlyOptionExpired:
+            try:
+                instrumentList =self.kite.instruments(exchange="NFO")
+                isOptionTokenFound = False
+                isTradingTokenFound = False
+                for instrument in instrumentList:
+                    trading_Symbol = str(instrument['tradingsymbol'])
+                    if not isOptionTokenFound and self.options_token in trading_Symbol:
+                        instrument_token = instrument['instrument_token']
+                        token = {}
+                        token[self.options_token] = instrument_token
+                        isOptionTokenFound = True
+                        if self.isWeeklyOption:
+                            print('WEEKLY OPTION TRADING TOKEN : {}'.format(token))
+                        else:
+                            print('MONTHLY OPTION TRADING TOKEN : {}'.format(token))
+                        
             
-            print(options_token)
-            break
-
-else:
-    lastThursday = month[-1][calendar.THURSDAY]
-    print('lastThursday : {}'.format(lastThursday))
-
-    for i in range(len(month)):
-        thursday = month[i][calendar.THURSDAY]
-        if thursday > today :
-            if (thursday == lastThursday):
-                options_token = 'BANKNIFTY21DEC{}CE'.format(strikePrice)
-            else:
-                options_token = 'BANKNIFTY21D{}{}CE'.format(thursday).format(strikePrice)
+                    if not isTradingTokenFound and self.tradingSymbol in trading_Symbol:
+                        instrument_token = instrument['instrument_token']
+                        token = {}
+                        token[self.tradingSymbol] = instrument_token
+                        print('MAIN TRADING TOKEN : {}'.format(token))
+                        isTradingTokenFound = True
             
-            print(options_token)
-            break
+                    if isOptionTokenFound and isTradingTokenFound:
+                        break
+            
+                print('--------- END FETCHING INSTRUMENT LIST ---------------')
+            except Exception as e:
+                print(e)
 
-instrumentList =kite.instruments(exchange="NFO")
-for instrument in instrumentList:
-    tradingSymbol = str(instrument['tradingsymbol'])
-    if options_token == tradingSymbol:
-        print('------------------------')
-        # print('TRADING SYMBOL : {}'.format(tradingSymbol))
-        # symbol = "NFO:{}".format(tradingSymbol)
-        # ltp = kite.ltp([symbol])
-        # print('LAST PRICE : {}'.format(ltp[symbol]['last_price']))
-        print(instrument)
+if __name__ == '__main__':
+    # use month in single digi ex. JAN = 1 , FEB = 2 except OCT,NOV,DEC . OCT = 10
+    # change the date and run python test.py in terminal to see out put 
+    # Kite Access-Token and Api-Key added hardcoded 
+    day = 28
+    month = 1
+    year = 2022
 
-        break
+    # Passing Date
+    print('INPUT DATE : {}-{}-{}'.format(day,month,year))
 
-print('------------------------')
+    optionTradingSymbol = OptionsTradingSymbols()
+    optionTradingSymbol.generateStrikePrice()
+    optionTradingSymbol.generateTradingTokens(day,month,year)
 
-# input = [1,-2,4,-5,1]
-# need_to_terminate = False
-# subArray = []
-# x=0 
-# y=0
+    
 
-# while not need_to_terminate :
-
-#     arr = []
-#     sum =0
-#     for i in range(x,y):
-#         data = input[i]
-#         sum+=data
-#         arr.append(data)
-
-#     if sum < 0:
-#         subArray.append(arr)
-
-#     if y == len(input):
-#         if x == len(input):
-#             need_to_terminate = True
-#         else:
-#             x+=1
-#             y=0
-#     else:
-#         y+=1
-
-# print('Total Sub array found whose sum was negative : {}'.format(len(subArray)))
-# print('Negative Sub array was : {}'.format(subArray))
 
 
 
