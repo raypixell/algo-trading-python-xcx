@@ -180,24 +180,7 @@ class BankNifty:
         
                 # So Fetch Again
                 self.generateTradingTokens(1,fetchingMonth,fetchingYear)
-
-        if not isMonthlyOptionExpired:
-            try:
-                instrumentList =self.kite.instruments(exchange="NFO")
-                for instrument in instrumentList:
-                    trading_Symbol = str(instrument['tradingsymbol'])
-                    
-                    if self.tradingSymbol in trading_Symbol:
-                        instrument_token = instrument['instrument_token']
-                        self.tokens = {}
-                        self.tokens[instrument_token] = self.tradingSymbol
-                        print('MAIN TRADING TOKEN : {}'.format(self.tokens))
-                        isTradingTokenFound = True
-                        break
             
-                print('--------- END FETCHING INSTRUMENT LIST ---------------')
-            except Exception as e:
-                print(e)
 
     def stopThread(self):
         print('stop Bank Nifty Thread called....')
@@ -208,6 +191,20 @@ class BankNifty:
         self.TERMINATE_BANK_NIFTY = False
 
         try:
+
+            instrumentList =self.kite.instruments(exchange="NFO")
+            for instrument in instrumentList:
+                trading_Symbol = str(instrument['tradingsymbol'])
+                    
+                if self.tradingSymbol in trading_Symbol:
+                    instrument_token = instrument['instrument_token']
+                    self.tokens = {}
+                    self.tokens[instrument_token] = self.tradingSymbol
+                    print('MAIN TRADING TOKEN : {}'.format(self.tokens))
+                    break
+            
+            print('--------- END FETCHING INSTRUMENT LIST ---------------')
+
             while not self.TERMINATE_BANK_NIFTY:
 
                 now = datetime.now()
