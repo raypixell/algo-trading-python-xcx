@@ -283,7 +283,7 @@ class BankNifty:
                     now = datetime.now()
                     now = now.astimezone(self.tz)
 
-                    if now.second == 57 and now.minute % (int(timeInterval)-1) == 0:
+                    if now.minute % int(timeInterval) == 0:
                         NEED_TO_EXIT_TRADE_LOOP = True
 
                     symbol = "NFO:{}".format(str(self.tokens[token]))
