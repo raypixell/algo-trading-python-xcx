@@ -192,8 +192,10 @@ class BankNifty:
     def startBankNiftyAlgo(self,timeInterval):
 
         self.TERMINATE_BANK_NIFTY = False
+        
+        try:
 
-        instrumentList =self.kite.instruments(exchange="NFO")
+            instrumentList =self.kite.instruments(exchange="NFO")
             for instrument in instrumentList:
                 trading_Symbol = str(instrument['tradingsymbol'])
                     
@@ -205,8 +207,6 @@ class BankNifty:
                     break
             
             print('--------- END FETCHING INSTRUMENT LIST ---------------')
-        
-        try:
 
             while not self.TERMINATE_BANK_NIFTY:
                 now = datetime.now()
