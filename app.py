@@ -104,6 +104,19 @@ def onConnected(msg):
             # Update Start Stop Btn State
             socketio.emit('update_btn_state_bank_nifty',script_running_staus)
 
+        now = datetime.now()
+        now = now.astimezone(tz)
+        bank_nifty_log_file_name = "bank_nifty_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
+
+        if os.path.exists(bank_nifty_log_file_name):
+            with open(bank_nifty_log_file_name, "r") as txtFile:
+                for line in txtFile:
+                    line = line.strip()
+                    print('line : ' , line)
+                    logMessage = {"logReport" : line}
+                    socketio.emit('log_report_bank_nifty',logMessage)
+        
+
 # Commodities Script
 @socketio.on('start_script')
 def start_script(data):

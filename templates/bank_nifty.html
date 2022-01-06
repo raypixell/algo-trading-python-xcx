@@ -140,6 +140,10 @@
             socket.emit('connected', { data: 'Connected to bank nifty', 'page': 3 });
         });
 
+        socket.on('disconnect',function(){
+            logString = '';
+        });
+
         const startScript = function () {
             socket.emit('start_bank_nifty_script', { 'ema': 5, 'is_started': true });
         }
