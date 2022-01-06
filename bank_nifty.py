@@ -59,31 +59,15 @@ class BankNifty:
         self.option_exchange = None
         self.isWeeklyOption = False
 
+        self.generateTradingTokens(now.day,now.month,now.year)
+
         # Log String
         self.logMessage = 'Bank Nifty Script Started...'
         self.sendLogReport(self.logMessage)
         self.logMessage = 'Script automatically executed at an interval of ' +"' " +self.candleInterval+" '"
         self.sendLogReport(self.logMessage)
 
-        # Now Check For Week Day
-        # If its a week day then scripts must be closed
-        today = now.day
-        month = calendar.monthcalendar(now.year, now.month)
-        for week in month:
-            if today in week:
-                saturday = week[calendar.SATURDAY]
-                sunday = week[calendar.SUNDAY]
-                if today == saturday or today == sunday:
-                    logString = 'MARKET CLOSED'
-                    self.sendLogReport(self.logMessage)
-                    logString = 'MARKET CLOSED ON STATURDAY AND SUNDAY'
-                    self.IS_ITS_MARKET_TIME = False
-                    self.socketio.emit('force_stop_bank_nifty_script')
-                
-                break
-                
-        if self.IS_ITS_MARKET_TIME:
-            self.generateTradingTokens(now.day,now.month,now.year)
+        
 
         
     def generateTradingTokens(self,current_day,fetching_month,fetching_year):
@@ -206,70 +190,46 @@ class BankNifty:
         self.TERMINATE_BANK_NIFTY = True
 
     def startBankNiftyAlgo(self,timeInterval):
-        
-        if self.IS_ITS_MARKET_TIME:
 
-            try:
-                self.TERMINATE_BANK_NIFTY = False
+        self.TERMINATE_BANK_NIFTY = False
 
-                instrumentList =self.kite.instruments(exchange="NFO")
-                for instrument in instrumentList:
-                    trading_Symbol = str(instrument['tradingsymbol'])
+        instrumentList =self.kite.instruments(exchange="NFO")
+            for instrument in instrumentList:
+                trading_Symbol = str(instrument['tradingsymbol'])
                     
-                    if self.tradingSymbol in trading_Symbol:
-                        instrument_token = instrument['instrument_token']
-                        self.tokens = {}
-                        self.tokens[instrument_token] = self.tradingSymbol
-                        print('MAIN TRADING TOKEN : {}'.format(self.tokens))
-                        break
+                if self.tradingSymbol in trading_Symbol:
+                    instrument_token = instrument['instrument_token']
+                    self.tokens = {}
+                    self.tokens[instrument_token] = self.tradingSymbol
+                    print('MAIN TRADING TOKEN : {}'.format(self.tokens))
+                    break
             
-                print('--------- END FETCHING INSTRUMENT LIST ---------------')
-
-                while not self.TERMINATE_BANK_NIFTY and self.IS_ITS_MARKET_TIME:
-
-                    now = datetime.now()
-                    now = now.astimezone(self.tz)
-
-                    if now.hour==15:
-                        if now.minute>30:
-                            logString = 'MARKET CLOSED'
-                            self.sendLogReport(self.logMessage)
-                            logString = 'POST MARKET SESSION , MARKET OPENS ONLY TILL 03:30 PM'
-                            self.sendLogReport(self.logMessage)
-                            self.IS_ITS_MARKET_TIME = False
-                            self.socketio.emit('force_stop_bank_nifty_script')
-                        else:
-                            self.IS_ITS_MARKET_TIME = TRUE
-                    else:
-                        if now.hour >= 16:
-                            logString = 'MARKET CLOSED'
-                            self.sendLogReport(self.logMessage)
-                            logString = 'MARKET OPENS ONLY TILL 03:30 PM'
-                            self.sendLogReport(self.logMessage)
-                            self.IS_ITS_MARKET_TIME = False
-                            self.socketio.emit('force_stop_bank_nifty_script')
-                        else:
-                            self.IS_ITS_MARKET_TIME = True
-
-
-                    if self.IS_ITS_MARKET_TIME and now.second == int(timeInterval) and now.minute % int(timeInterval) == 0:
-                        self.currentTime ='%02d:%02d:%02d' % (now.hour,now.minute,now.second)
-                        logString = 'Start Checking At : ' + str(self.currentTime)
-                        self.sendLogReport(logString)
-
-                        self.fetchedCandleTime ='%02d:%02d:%02d' % (now.hour,now.minute-int(timeInterval),now.second-int(timeInterval))
-                        logString = 'Fetched Candle Time : ' + str(self.fetchedCandleTime)
-                        self.sendLogReport(logString)
-
-                        # Now Checking Bank Nifty
-                        time.sleep(1)
-                        self.checkBankNifty(timeInterval)
+            print('--------- END FETCHING INSTRUMENT LIST ---------------')
         
-            except Exception as ex:
-                print(ex)
-                logString = str(ex)
-                self.sendLogReport(logString)
-                self.socketio.emit('force_stop_bank_nifty_script')
+        try:
+
+            while not self.TERMINATE_BANK_NIFTY:
+                now = datetime.now()
+                now = now.astimezone(self.tz)
+
+                if now.second == int(timeInterval) and now.minute % int(timeInterval) == 0:
+                    self.currentTime ='%02d:%02d:%02d' % (now.hour,now.minute,now.second)
+                    logString = 'Start Checking At : ' + str(self.currentTime)
+                    self.sendLogReport(logString)
+
+                    self.fetchedCandleTime ='%02d:%02d:%02d' % (now.hour,now.minute-int(timeInterval),now.second-int(timeInterval))
+                    logString = 'Fetched Candle Time : ' + str(self.fetchedCandleTime)
+                    self.sendLogReport(logString)
+
+                    # Now Checking Bank Nifty
+                    time.sleep(1)
+                    self.checkBankNifty(timeInterval)
+        
+        except Exception as ex:
+            print(ex)
+            logString = str(ex)
+            self.sendLogReport(logString)
+            self.socketio.emit('force_stop_bank_nifty_script')       
 
     def checkBankNifty(self,timeInterval):
         logString = 'Please wait while checking " BANK NIFTY " futures...'
