@@ -59,6 +59,12 @@ class BankNifty:
         self.option_exchange = None
         self.isWeeklyOption = False
 
+        # Log String
+        self.logMessage = 'Bank Nifty Script Started...'
+        self.sendLogReport(self.logMessage)
+        self.logMessage = 'Script automatically executed at an interval of ' +"' " +self.candleInterval+" '"
+        self.sendLogReport(self.logMessage)
+
         # Now Check For Week Day
         # If its a week day then scripts must be closed
         today = now.day
@@ -219,12 +225,6 @@ class BankNifty:
             
                 print('--------- END FETCHING INSTRUMENT LIST ---------------')
 
-                # Log String
-                logString = 'Bank Nifty Script Started...'
-                self.sendLogReport(logString)
-                logString = 'Script automatically executed at an interval of ' +"' " +self.candleInterval+" '"
-                self.sendLogReport(logString)
-
                 while not self.TERMINATE_BANK_NIFTY and self.IS_ITS_MARKET_TIME:
 
                     now = datetime.now()
@@ -233,9 +233,9 @@ class BankNifty:
                     if now.hour==15:
                         if now.minute>30:
                             logString = 'MARKET CLOSED'
-                            self.sendLogReport(logString)
+                            self.sendLogReport(self.logMessage)
                             logString = 'POST MARKET SESSION , MARKET OPENS ONLY TILL 03:30 PM'
-                            self.sendLogReport(logString)
+                            self.sendLogReport(self.logMessage)
                             self.IS_ITS_MARKET_TIME = False
                             self.socketio.emit('force_stop_bank_nifty_script')
                         else:
@@ -243,9 +243,9 @@ class BankNifty:
                     else:
                         if now.hour >= 16:
                             logString = 'MARKET CLOSED'
-                            self.sendLogReport(logString)
+                            self.sendLogReport(self.logMessage)
                             logString = 'MARKET OPENS ONLY TILL 03:30 PM'
-                            self.sendLogReport(logString)
+                            self.sendLogReport(self.logMessage)
                             self.IS_ITS_MARKET_TIME = False
                             self.socketio.emit('force_stop_bank_nifty_script')
                         else:
