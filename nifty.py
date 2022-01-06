@@ -227,7 +227,7 @@ class Nifty:
             print(ex)
             logString = str(ex)
             self.sendLogReport(logString)
-            self.socketio.emit('force_stop_bank_nifty_script')
+            self.socketio.emit('force_stop_nifty_script')
 
     def checkNifty(self,timeInterval):
         logString = 'Please wait while checking " NIFTY " futures...'

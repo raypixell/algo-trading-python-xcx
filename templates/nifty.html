@@ -150,11 +150,11 @@
 
         socket.on('update_btn_state_nifty', (data) => {
             var btnStateJson = JSON.parse(JSON.stringify(data));
-            var bank_nifty_btn_state = btnStateJson.Bank_Nifty;
+            var nifty_btn_state = btnStateJson.Nifty;
             var startBtn = document.getElementById('start')
             var stopBtn = document.getElementById('stop');
 
-            if (bank_nifty_btn_state) {
+            if (nifty_btn_state) {
                 startBtn.disabled = true;
                 stopBtn.disabled = false;
             } else {
@@ -164,8 +164,8 @@
 
         });
 
-        socket.on('force_stop_bank_nifty_script', function () {
-            socket.emit('stop_bank_nifty_script', { 'ema': 5, 'is_started': false });
+        socket.on('force_stop_nifty_script', function () {
+            socket.emit('stop_nifty_script', { 'ema': 5, 'is_started': false });
         });
 
         socket.on('log_report_nifty', (logMessage) => {
