@@ -9,7 +9,7 @@ import os
 import pytz
 
 
-class BankNifty:
+class Nifty:
 
     def __init__(self,socketio,selectedInterval):
 
@@ -25,7 +25,7 @@ class BankNifty:
         self.kite = KiteConnect(api_key=self.api_key,timeout=20)
         self.kite.set_access_token(self.access_token)
 
-        self.REPORT_FILE_NAME = 'bank_nifty_stats_report.xlsx'
+        self.REPORT_FILE_NAME = 'nifty_stats_report.xlsx'
 
         self.tz = pytz.timezone('Asia/Kolkata')
         self.currentTime = None
@@ -33,7 +33,7 @@ class BankNifty:
         # Log file name
         now = datetime.now()
         now = now.astimezone(self.tz)
-        self.DOWNLOAD_LOG_FILE_NAME = "bank_nifty_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
+        self.DOWNLOAD_LOG_FILE_NAME = "nifty_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
         print(self.DOWNLOAD_LOG_FILE_NAME)
 
         self.candleInterval = selectedInterval
@@ -46,12 +46,11 @@ class BankNifty:
         # bank nifty instrument token
         self.tokens = None
         self.logReport = None
-        self.TERMINATE_BANK_NIFTY = None
-        self.IS_ITS_MARKET_TIME = True
+        self.TERMINATE_NIFTY = None
 
         # trading symbol constants
         self.monthlyContractOptionFlag = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
-        self.tradeSymbol = 'BANKNIFTY'
+        self.tradeSymbol = 'NIFTY'
         self.tradingSymbol = None
         self.options_token = None
         self.option_instrument_token = None
@@ -59,26 +58,14 @@ class BankNifty:
         self.option_exchange = None
         self.isWeeklyOption = False
 
-        # Now Check For Week Day
-        # If its a week day then scripts must be closed
-        today = now.day
-        month = calendar.monthcalendar(now.year, now.month)
-        for week in month:
-            if today in week:
-                saturday = week[calendar.SATURDAY]
-                sunday = week[calendar.SUNDAY]
-                if today == saturday or today == sunday:
-                    logString = 'MARKET CLOSED'
-                    self.sendLogReport(self.logMessage)
-                    logString = 'MARKET CLOSED ON STATURDAY AND SUNDAY'
-                    self.IS_ITS_MARKET_TIME = False
-                    self.socketio.emit('force_stop_bank_nifty_script')
-                
-                break
-                
-        if self.IS_ITS_MARKET_TIME:
-            self.generateTradingTokens(now.day,now.month,now.year)
+        # Log String
+        self.logMessage = 'Nifty Script Started...'
+        self.sendLogReport(self.logMessage)
+        self.logMessage = 'Script automatically executed at an interval of ' +"' " +self.candleInterval+" '"
+        self.sendLogReport(self.logMessage)
 
+        # generate Trading Tokens
+        self.generateTradingTokens(now.day,now.month,now.year)
         
     def generateTradingTokens(self,current_day,fetching_month,fetching_year):
         # Fetching Months
@@ -149,7 +136,7 @@ class BankNifty:
         
             for i in range(len(thursdayList)):
                 thursday = thursdayList[i]
-                if thursday >= current_day :
+                if thursday > current_day :
                     lastThursday = thursdayList[-1]
                     print('pickedThursday : {}'.format(thursday))
 
@@ -196,83 +183,54 @@ class BankNifty:
             
 
     def stopThread(self):
-        print('stop Bank Nifty Thread called....')
-        self.TERMINATE_BANK_NIFTY = True
+        print('Stop Nifty Thread called....')
+        self.TERMINATE_NIFTY = True
 
-    def startBankNiftyAlgo(self,timeInterval):
-        
-        if self.IS_ITS_MARKET_TIME:
+    def startNiftyAlgo(self,timeInterval):
 
-            try:
-                self.TERMINATE_BANK_NIFTY = False
+        self.TERMINATE_NIFTY = False
 
-                instrumentList =self.kite.instruments(exchange="NFO")
-                for instrument in instrumentList:
-                    trading_Symbol = str(instrument['tradingsymbol'])
+        try:
+
+            instrumentList =self.kite.instruments(exchange="NFO")
+            for instrument in instrumentList:
+                trading_Symbol = str(instrument['tradingsymbol'])
                     
-                    if self.tradingSymbol in trading_Symbol:
-                        instrument_token = instrument['instrument_token']
-                        self.tokens = {}
-                        self.tokens[instrument_token] = self.tradingSymbol
-                        print('MAIN TRADING TOKEN : {}'.format(self.tokens))
-                        break
+                if self.tradingSymbol in trading_Symbol:
+                    instrument_token = instrument['instrument_token']
+                    self.tokens = {}
+                    self.tokens[instrument_token] = self.tradingSymbol
+                    print('MAIN TRADING TOKEN : {}'.format(self.tokens))
+                    break
             
-                print('--------- END FETCHING INSTRUMENT LIST ---------------')
+            print('--------- END FETCHING INSTRUMENT LIST ---------------')
 
-                # Log String
-                logString = 'Bank Nifty Script Started...'
-                self.sendLogReport(logString)
-                logString = 'Script automatically executed at an interval of ' +"' " +self.candleInterval+" '"
-                self.sendLogReport(logString)
+            while not self.TERMINATE_NIFTY:
 
-                while not self.TERMINATE_BANK_NIFTY and self.IS_ITS_MARKET_TIME:
+                now = datetime.now()
+                now = now.astimezone(self.tz)
 
-                    now = datetime.now()
-                    now = now.astimezone(self.tz)
+                if now.second == int(timeInterval) and now.minute % int(timeInterval) == 0:
+                    self.currentTime ='%02d:%02d:%02d' % (now.hour,now.minute,now.second)
+                    logString = 'Start Checking At : ' + str(self.currentTime)
+                    self.sendLogReport(logString)
 
-                    if now.hour==15:
-                        if now.minute>30:
-                            logString = 'MARKET CLOSED'
-                            self.sendLogReport(logString)
-                            logString = 'POST MARKET SESSION , MARKET OPENS ONLY TILL 03:30 PM'
-                            self.sendLogReport(logString)
-                            self.IS_ITS_MARKET_TIME = False
-                            self.socketio.emit('force_stop_bank_nifty_script')
-                        else:
-                            self.IS_ITS_MARKET_TIME = TRUE
-                    else:
-                        if now.hour >= 16:
-                            logString = 'MARKET CLOSED'
-                            self.sendLogReport(logString)
-                            logString = 'MARKET OPENS ONLY TILL 03:30 PM'
-                            self.sendLogReport(logString)
-                            self.IS_ITS_MARKET_TIME = False
-                            self.socketio.emit('force_stop_bank_nifty_script')
-                        else:
-                            self.IS_ITS_MARKET_TIME = True
+                    self.fetchedCandleTime ='%02d:%02d:%02d' % (now.hour,now.minute-int(timeInterval),now.second-int(timeInterval))
+                    logString = 'Fetched Candle Time : ' + str(self.fetchedCandleTime)
+                    self.sendLogReport(logString)
 
-
-                    if self.IS_ITS_MARKET_TIME and now.second == int(timeInterval) and now.minute % int(timeInterval) == 0:
-                        self.currentTime ='%02d:%02d:%02d' % (now.hour,now.minute,now.second)
-                        logString = 'Start Checking At : ' + str(self.currentTime)
-                        self.sendLogReport(logString)
-
-                        self.fetchedCandleTime ='%02d:%02d:%02d' % (now.hour,now.minute-int(timeInterval),now.second-int(timeInterval))
-                        logString = 'Fetched Candle Time : ' + str(self.fetchedCandleTime)
-                        self.sendLogReport(logString)
-
-                        # Now Checking Bank Nifty
-                        time.sleep(1)
-                        self.checkBankNifty(timeInterval)
+                    # Now Checking Bank Nifty
+                    time.sleep(1)
+                    self.checkNifty(timeInterval)
         
-            except Exception as ex:
-                print(ex)
-                logString = str(ex)
-                self.sendLogReport(logString)
-                self.socketio.emit('force_stop_bank_nifty_script')
+        except Exception as ex:
+            print(ex)
+            logString = str(ex)
+            self.sendLogReport(logString)
+            self.socketio.emit('force_stop_bank_nifty_script')
 
-    def checkBankNifty(self,timeInterval):
-        logString = 'Please wait while checking " BANK NIFTY " futures...'
+    def checkNifty(self,timeInterval):
+        logString = 'Please wait while checking " NIFTY " futures...'
         self.sendLogReport(logString)
 
         isTraded = False
@@ -286,18 +244,18 @@ class BankNifty:
                     interval=self.candleInterval)
 
             # Bank Nifty Data Frame
-            bankNiftyDF = pd.DataFrame(records)
-            bankNiftyDF.drop(bankNiftyDF.tail(1).index,inplace=True)
+            niftyDF = pd.DataFrame(records)
+            niftyDF.drop(niftyDF.tail(1).index,inplace=True)
 
             # Calculating EMA5
-            bankNiftyDF["ema5"] = ta.ema(bankNiftyDF['close'], length=5)
+            niftyDF["ema5"] = ta.ema(niftyDF['close'], length=5)
 
             # Convert date type to excel supported date type
-            bankNiftyDF['date'] = bankNiftyDF['date'].apply(lambda a: pd.to_datetime(a).date())
-            bankNiftyDF.to_excel(self.REPORT_FILE_NAME)
+            niftyDF['date'] = niftyDF['date'].apply(lambda a: pd.to_datetime(a).date())
+            niftyDF.to_excel(self.REPORT_FILE_NAME)
 
             # Fetching Trigger Candle in latest Candle
-            triggerCandle = bankNiftyDF.iloc[-1]
+            triggerCandle = niftyDF.iloc[-1]
 
             triggerCandleClose = triggerCandle['close']
             triggerCandleOpen = triggerCandle['open']
@@ -400,12 +358,12 @@ class BankNifty:
                                         to_date=till_date, 
                                         interval=self.candleInterval)
 
-                        # Bank Nifty Options Data Frame
-                        bankNiftyOptionsDF = pd.DataFrame(optionsRecords)
-                        bankNiftyOptionsDF.drop(bankNiftyOptionsDF.tail(1).index,inplace=True)
+                        # Nifty Options Data Frame
+                        niftyOptionsDF = pd.DataFrame(optionsRecords)
+                        niftyOptionsDF.drop(niftyOptionsDF.tail(1).index,inplace=True)
 
                         # Fetching latest Candle
-                        latestCandle = bankNiftyOptionsDF.iloc[-1]
+                        latestCandle = niftyOptionsDF.iloc[-1]
 
                         optionHigh = latestCandle['high']
                         optionLow = latestCandle['low']
@@ -472,12 +430,12 @@ class BankNifty:
                 self.sendLogReport(logString)
 
                 # Now update json file 
-                with open("bank_nifty_script_running_status.json", "r") as jsonFile:
+                with open("nifty_script_running_status.json", "r") as jsonFile:
                     script_running_staus = json.load(jsonFile)
 
                 # Update Script Running Status
                 script_running_staus["is_trade_executed"] = True
-                with open("bank_nifty_script_running_status.json", "w") as jsonFile:
+                with open("nifty_script_running_status.json", "w") as jsonFile:
                     json.dump(script_running_staus, jsonFile)
 
                 
@@ -531,7 +489,7 @@ class BankNifty:
 
                         # Update Script Running Status
                         script_running_staus["is_trade_executed"] = False
-                        with open("bank_nifty_script_running_status.json", "w") as jsonFile:
+                        with open("nifty_script_running_status.json", "w") as jsonFile:
                             json.dump(script_running_staus, jsonFile)
 
                     elif latestPrice <= targetPrice :
@@ -564,7 +522,7 @@ class BankNifty:
 
                         # Update Script Running Status
                         script_running_staus["is_trade_executed"] = False
-                        with open("bank_nifty_script_running_status.json", "w") as jsonFile:
+                        with open("nifty_script_running_status.json", "w") as jsonFile:
                             json.dump(script_running_staus, jsonFile)
 
                     time.sleep(0.5)

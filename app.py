@@ -14,6 +14,7 @@ from commodities_silver import SilverCommodities
 from commodities_natural_gas import NaturalGasCommodities
 from commodities_lead import LeadCommodities
 from bank_nifty import BankNifty
+from nifty import Nifty
 
 
 gold_job = None
@@ -21,6 +22,7 @@ silver_job = None
 natural_gas_job = None
 lead_job = None
 bank_nifty_job = None
+nitfy_job = None
 stop_all_job = None
 
 gold_log_report = None
@@ -33,10 +35,12 @@ silverCommodities = None
 naturalGasCommodities = None
 leadCommodities = None
 bankNifty = None
+nifty = None
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abcdefghijklmnopqrstuvwxyzVIKASJHA'
 socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*",async_mode='gevent')
+# socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*")
 tz = pytz.timezone('Asia/Kolkata')
 
 @app.route("/", methods=['POST', 'GET'])
@@ -53,6 +57,13 @@ def commodities():
         return 'POST METHOD EXECUTED'            
     elif request.method == 'GET':
         return render_template('commodities.html')
+
+@app.route("/nifty", methods=['POST', 'GET'])
+def nifty():
+    if request.method == "POST":
+        return 'POST METHOD EXECUTED'            
+    elif request.method == 'GET':
+        return render_template('nifty.html')
 
 @app.route("/bank_nifty", methods=['POST', 'GET'])
 def bank_nifty():
@@ -76,11 +87,20 @@ def onConnected(msg):
     print('------------')
 
     if msg['page'] == 2:
-        with open("bank_nifty_script_running_status.json", "r") as jsonFile:
+        # Connected to Nifty Page
+        with open("nifty_script_running_status.json", "r") as jsonFile:
             script_running_staus = json.load(jsonFile)
 
             # Update Start Stop Btn State
             socketio.emit('update_btn_state_nifty',script_running_staus)
+    
+    elif msg['page'] == 3:
+        # Connected to Bank Nifty Page
+        with open("bank_nifty_script_running_status.json", "r") as jsonFile:
+            script_running_staus = json.load(jsonFile)
+
+            # Update Start Stop Btn State
+            socketio.emit('update_btn_state_bank_nifty',script_running_staus)
 
 # Commodities Script
 @socketio.on('start_script')
@@ -464,6 +484,15 @@ def download(selectedCommodities):
     elif selectedCommodities == 5:
         now = datetime.now()
         now = now.astimezone(tz)
+        nifty_log_file_name = "nifty_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
+
+        if os.path.exists(nifty_log_file_name):
+            return send_file(nifty_log_file_name, as_attachment=True)
+        else:
+            return "No log found for Nifty."
+    elif selectedCommodities == 6:
+        now = datetime.now()
+        now = now.astimezone(tz)
         bank_nifty_log_file_name = "bank_nifty_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
 
         if os.path.exists(bank_nifty_log_file_name):
@@ -647,6 +676,77 @@ def stop_bank_nifty_script(data):
         if bank_nifty_job.is_alive():
             print('Bank Nifty thread stopped!')
             bankNifty.stopThread()
+            
+    except Exception as ex:
+        print(ex)
+
+# Nifty Script
+@socketio.on('start_nifty_script')
+def start_nifty_script(data):
+    with open("nifty_script_running_status.json", "r") as jsonFile:
+        script_running_staus = json.load(jsonFile)
+
+    script_running_staus["Nifty"] = True
+    with open("nifty_script_running_status.json", "w") as jsonFile:
+        json.dump(script_running_staus, jsonFile)
+
+    # Update Start Stop Btn State
+    socketio.emit('update_btn_state_nifty',script_running_staus)
+
+    # Start Nifty Script
+    global nifty
+    selectedInterval = '5minute'
+
+    nifty = Nifty(socketio,selectedInterval)
+
+    global nifty_job
+    nifty_job = Thread(target = nifty.startNiftyAlgo, args =(5,), daemon = False)
+    nifty_job.start()
+        
+@socketio.on('stop_nifty_script')
+def stop_nifty_script(data):
+    
+    try:
+
+        with open("nifty_script_running_status.json", "r") as jsonFile:
+            script_running_staus = json.load(jsonFile)
+        
+        now = datetime.now()
+        now = now.astimezone(tz)
+        currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+        nifty_log_file_name = "nifty_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
+
+        # open file stream
+        f=open(nifty_log_file_name, "a+")
+
+        logString = 'Script Stopped! at : ' + str(currentTime)
+        f.write('\n'+logString)
+
+        logMessage = {"logReport" : logString}
+        socketio.emit('log_report_nifty',logMessage)
+        
+        logString = '---------------------------'
+        f.write('\n'+logString)
+
+        logMessage = {"logReport" : logString}
+        socketio.emit('log_report_nifty',logMessage)
+        
+
+        # close file stream
+        f.close()
+
+        # Update Script Running Status
+        script_running_staus["Nifty"] = False
+        with open("nifty_script_running_status.json", "w") as jsonFile:
+            json.dump(script_running_staus, jsonFile)
+            
+        # Update Start Stop Btn State
+        socketio.emit('update_btn_state_nifty',script_running_staus)
+
+        # Stop This Thread
+        if nifty_job.is_alive():
+            print('Nifty thread stopped!')
+            Nifty.stopThread()
             
     except Exception as ex:
         print(ex)
