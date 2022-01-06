@@ -36,17 +36,17 @@ now = now.astimezone(tz)
 #                 if now.hour >= 16:
 #                     print('MARKET CLOSED
 # newDate = '%02d-%b-%02d' % (now.day,now.month,now.year)
-executedTill = now + timedelta(minutes=5)
-NEED_TO_EXIT_TRADE_LOOP = False
-while not NEED_TO_EXIT_TRADE_LOOP:
-    now = datetime.now()
-    now = now.astimezone(tz)
+# executedTill = now + timedelta(minutes=5)
+# NEED_TO_EXIT_TRADE_LOOP = False
+# while not NEED_TO_EXIT_TRADE_LOOP:
+#     now = datetime.now()
+#     now = now.astimezone(tz)
                     
-    if now.minute == executedTill.minute :
-        NEED_TO_EXIT_TRADE_LOOP = True
+#     if now.minute == executedTill.minute :
+#         NEED_TO_EXIT_TRADE_LOOP = True
         
-    print('Now : {}'.format(now.minute))
-    print('Executed Till : {}'.format(executedTill.minute))
+#     print('Now : {}'.format(now.minute))
+#     print('Executed Till : {}'.format(executedTill.minute))
 
 
             
