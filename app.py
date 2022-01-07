@@ -515,7 +515,7 @@ def download(selectedCommodities):
         else:
             return "No log found for Bank Nifty."
 
-@socketio.on('save_access_token')
+@app.route("/save_access_token")
 def save_access_token():
 
     # Fetch Access-Token From Api
@@ -657,19 +657,19 @@ def stop_bank_nifty_script(data):
         
         now = datetime.now()
         now = now.astimezone(tz)
-        currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+        currentTime = datetime.strftime(now, '%I : %M %p')
         nifty_log_file_name = "bank_nifty_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
 
         # open file stream
         f=open(nifty_log_file_name, "a+")
 
-        logString = 'Script Stopped! at : ' + str(currentTime)
+        logString = 'SCRIPT STOPPED AT : {}'.format(currentTime)
         f.write('\n'+logString)
 
         logMessage = {"logReport" : logString}
         socketio.emit('log_report_bank_nifty',logMessage)
         
-        logString = '---------------------------'
+        logString = '---------------------------------------------------------------------------------------------------'
         f.write('\n'+logString)
 
         logMessage = {"logReport" : logString}

@@ -98,13 +98,13 @@
         var socket = io();
 
         socket.on('connect', function () {
-            socket.emit('connected', { data: 'Connected to settings','page':3 });
+            socket.emit('connected', { data: 'Connected to settings','page':4 });
         });
 
         const updateAccessToken = function () {
             var access_token_status = document.getElementById('access_token_status');
-            access_token_status.innerHTML = 'Please wait while fetching and updating access token ...'
-            socket.emit('save_access_token');
+            // access_token_status.innerHTML = 'Please wait while fetching and updating access token ...'
+            // socket.emit('save_access_token');
         }
 
         socket.on('access_token_updated', (selectedCommodities) => {
