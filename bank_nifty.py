@@ -49,6 +49,7 @@ class BankNifty:
         self.tradeSymbol = 'BANKNIFTY'
         self.tradingSymbol = None
         self.options_token = None
+        self.current_options_token = None
         self.option_instrument_token = None
         self.option_lot_size = None
         self.option_exchange = None
@@ -366,14 +367,14 @@ class BankNifty:
                     strikePrice = roundupNum + 100
 
                 # Create option trading symbol
-                self.options_token = self.options_token + str(strikePrice) + "CE"
-                print(self.options_token)
+                self.current_options_token = self.options_token + str(strikePrice) + "CE"
+                print(self.current_options_token)
 
                 # Fetching instrument id of selected option
                 instrumentList = self.kite.instruments(exchange="NFO")
                 for instrument in instrumentList:
                     tradingSymbolOptions = str(instrument['tradingsymbol'])
-                    if self.options_token == tradingSymbolOptions:        
+                    if self.current_options_token == tradingSymbolOptions:        
                         self.option_instrument_token = str(instrument['instrument_token'])
                         self.option_lot_size = instrument['lot_size']
                         self.option_exchange = str(instrument['exchange'])
@@ -388,7 +389,7 @@ class BankNifty:
                 optionsRecords = self.kite.historical_data(self.option_instrument_token, 
                                 from_date=self.from_date, 
                                 to_date=till_date, 
-                                nterval=self.candleInterval)
+                                interval=self.candleInterval)
 
                 # Bank Nifty Options Data Frame
                 bankNiftyOptionsDF = pd.DataFrame(optionsRecords)
@@ -422,7 +423,7 @@ class BankNifty:
                     if now.minute == EXECUTED_TILL.minute:
                         NEED_TO_EXIT_TRADE_LOOP = True
                     else:
-                        symbol = "NFO:{}".format(self.options_token)
+                        symbol = "NFO:{}".format(self.current_options_token)
                         ltp = self.kite.ltp([symbol])
                         latestPrice = ltp[symbol]['last_price']
 
@@ -430,6 +431,8 @@ class BankNifty:
                             # Trade executed
                             NEED_TO_EXIT_TRADE_LOOP = True
                             isTraded = True
+                        
+                    tm.sleep(1)
 
             if not isTraded:
                 lowLabel = str(round(triggerCandleLow,2))
@@ -443,7 +446,7 @@ class BankNifty:
                 # Place Sell Order
                 order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
                                 exchange =self.option_exchange,
-                                tradingsymbol =self.options_token,
+                                tradingsymbol =self.current_options_token,
                                 transaction_type = self.kite.TRANSACTION_TYPE_SELL,
                                 quantity = self.option_lot_size,
                                 product = 'MIS',
@@ -492,7 +495,7 @@ class BankNifty:
                 # Look for exit position
                 while script_running_staus["is_trade_executed"] :
 
-                    symbol = "NFO:{}".format(self.options_token)
+                    symbol = "NFO:{}".format(self.current_options_token)
                     ltp = self.kite.ltp([symbol])
                     latestPrice = ltp[symbol]['last_price']
 
@@ -501,7 +504,7 @@ class BankNifty:
                         # Place Buy Order
                         order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
                                         exchange =self.option_exchange,
-                                        tradingsymbol =self.options_token,
+                                        tradingsymbol =self.current_options_token,
                                         transaction_type = self.kite.TRANSACTION_TYPE_BUY,
                                         quantity = self.option_lot_size,
                                         product = 'MIS',
@@ -542,7 +545,7 @@ class BankNifty:
                         # Place Buy Order
                         order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
                                         exchange =self.option_exchange,
-                                        tradingsymbol =self.options_token,
+                                        tradingsymbol =self.current_options_token,
                                         transaction_type = self.kite.TRANSACTION_TYPE_BUY,
                                         quantity = self.option_lot_size,
                                         product = 'MIS',
@@ -576,6 +579,8 @@ class BankNifty:
                         self.sendLogReport(logString)
                         logString = self.dashedLabel
                         self.sendLogReport(logString)
+
+                    tm.sleep(1)
 
 
     def sendLogReport(self,logString):
