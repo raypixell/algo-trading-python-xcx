@@ -514,6 +514,15 @@ def download(selectedCommodities):
             return send_file(bank_nifty_log_file_name, as_attachment=True)
         else:
             return "No log found for Bank Nifty."
+    elif selectedCommodities == 7:
+        now = datetime.now()
+        now = now.astimezone(tz)
+        bank_nifty_order_report = "bank_nifty_order_report_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
+        
+        if os.path.exists(bank_nifty_order_report):
+            return send_file(bank_nifty_order_report, as_attachment=True)
+        else:
+            return "No order report found for Bank Nifty."
 
 @app.route("/save_access_token")
 def save_access_token():

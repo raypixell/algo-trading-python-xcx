@@ -111,7 +111,13 @@
                         </div>
                         <br>
                         <div class="row">
-                            <div class="col-10">
+                            <div class="col-2 m-auto text-right">
+                                <a id="download_order_report_anchor" href="#">
+                                    <button type="button" id="download" class="btn btn-outline-success btn-sm"
+                                        onclick="downloadOrderReport()">Download Order Report</button>
+                                </a>
+                            </div>
+                            <div class="col-8">
                             </div>
                             <div class="col-2 m-auto text-right">
                                 <a id="download_log_anchor" href="#">
@@ -203,6 +209,11 @@
         const downloadLog = function () {
             var log_anchor = document.getElementById('download_log_anchor');
             log_anchor.href = "{{ url_for('download',selectedCommodities=6) }}";
+        }
+
+        const downloadOrderReport = function(){
+            var log_anchor = document.getElementById('download_order_report_anchor');
+            log_anchor.href = "{{ url_for('download',selectedCommodities=7) }}";
         }
 
 
