@@ -68,16 +68,11 @@ class BankNifty:
         self.optionLow = None
         self.stopLossPrice = None
         self.targetPrice = None
+        self.instrumentList = None
 
         # log format 
         self.dashedLabel = '---------------------------------------------------------------------------------------------------'
         self.spaceGap = 20
-
-    def doLogin(self):
-        self.kite = KiteConnect(api_key=self.api_key,timeout=20)
-        self.kite.set_access_token(self.access_token)
-
-        self.kite_socket = KiteTicker(self.api_key, self.access_token)
 
     def fetchAccessToken(self):
         # Fetch Access-Token From Api
@@ -92,6 +87,22 @@ class BankNifty:
             self.sendLogReport(logString)
             self.TERMINATE_BANK_NIFTY = True
             self.socketio.emit('force_stop_bank_nifty_script')
+
+    def doLogin(self):
+        self.kite = KiteConnect(api_key=self.api_key,timeout=20)
+        self.kite.set_access_token(self.access_token)
+
+        self.kite_socket = KiteTicker(self.api_key, self.access_token)
+    
+    def fetchInstrumentToken(self):
+        try:
+            self.instrumentList = self.kite.instruments(exchange="NFO")
+            print('INSTRUMENT TOKEN FETCHED SUCCESSFULLY')
+        except Exception as e:
+            print(e)
+            tm.sleep(1)
+            self.fetchInstrumentToken()
+
         
     def generateTradingTokens(self,current_day,fetching_month,fetching_year):
         # Fetching Months
@@ -248,25 +259,27 @@ class BankNifty:
             latestPrice = ticks[0]['last_price']
             print('LTP : {}'.format(latestPrice))
 
+            now = datetime.now()
+            now = now.astimezone(self.tz)
+
             if self.optionLow > latestPrice:
                 # Trade executed
                 # Send Log Report to Client
-                tradeExecutedTime ='%02d:%02d' % (now.hour,now.minute)
+
+                # Stop Checking
+                self.NEED_TO_EXIT_TRADE_LOOP = True
+                self.kite_socket.unsubscribe([int(self.option_instrument_token)])
+                self.NEED_TO_EXIT_TRADE_LOOP = True
+                self.isTraded = True
 
                 lowLabel = str(round(self.triggerCandleLow,2))
                 emaLabel = str(round(self.triggerCandleEMA5,2))
                 
-                logString = tradeExecutedTime.center(self.spaceGap) + "|" + lowLabel.center(self.spaceGap) + "|" + emaLabel.center(self.spaceGap) + "|" + str(self.isTraded).center(self.spaceGap)
+                # Send log report to connected client
+                logString = self.fetchedCandleTime.center(self.spaceGap) + "|" + lowLabel.center(self.spaceGap) + "|" + emaLabel.center(self.spaceGap) + "|" + str(self.isTraded).center(self.spaceGap)
                 self.sendLogReport(logString)
                 logString = self.dashedLabel
                 self.sendLogReport(logString)
-
-                # Stop Checking
-                self.NEED_TO_EXIT_TRADE_LOOP = True
-                symbol = "NFO:{}".format(self.current_options_token)
-                self.kite_socket.unsubscribe(symbol)
-                self.NEED_TO_EXIT_TRADE_LOOP = True
-                self.isTraded = True
 
                 # Save Order Report
                 checkTime = '%02d:%02d:%02d' % (now.hour,now.minute,now.second)
@@ -300,6 +313,9 @@ class BankNifty:
 
             if latestPrice >=self.stopLossPrice:
                 # Stop Loss Hit
+                # unsubscribe socket
+                self.kite_socket.unsubscribe([int(self.option_instrument_token)])
+                
                 # Place Buy Order
                 order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
                                 exchange =self.option_exchange,
@@ -313,17 +329,13 @@ class BankNifty:
                 stopLossHitLabel = 'STOP_LOSS_HIT'
                 orderIdLabel = 'ORDER_ID'
                 # orderIdLabel = 'BUY_1234'
-                orderIdLabel = order_id
+                orderIdLabel = str(order_id)
 
                 # Save order report
                 logString = stopLossHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderIdLabel).center(self.spaceGap)
                 self.saveOrderReport(logString)
                 logString = self.dashedLabel
                 self.saveOrderReport(logString)
-
-                # unsubscribe socket
-                symbol = "NFO:{}".format(self.current_options_token)
-                self.kite_socket.unsubscribe(symbol)
                     
                 # Update Script Running Status
                 script_running_staus["is_trade_executed"] = False
@@ -334,6 +346,9 @@ class BankNifty:
 
             elif latestPrice <= self.targetPrice :
                 # Target Hit
+                # unsubscribe socket
+                self.kite_socket.unsubscribe([int(self.option_instrument_token)])
+
                 # Place Buy Order
                 order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
                                 exchange =self.option_exchange,
@@ -347,17 +362,13 @@ class BankNifty:
                 targetHitLabel = 'TARGET_HIT'
                 orderIdLabel = 'ORDER_ID'
                 # orderIdLabel = 'BUY_1234'
-                orderIdLabel = order_id
+                orderIdLabel = str(order_id)
 
                 # Save order report
                 logString = targetHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderIdLabel).center(self.spaceGap)
                 self.saveOrderReport(logString)
                 logString = self.dashedLabel
                 self.saveOrderReport(logString)
-
-                # unsubscribe socket
-                symbol = "NFO:{}".format(self.current_options_token)
-                self.kite_socket.unsubscribe(symbol)
 
                 # Update Script Running Status
                 script_running_staus["is_trade_executed"] = False
@@ -367,8 +378,8 @@ class BankNifty:
                 
         
     def on_connect(self,ws,response):
-        symbol = "NFO:{}".format(self.current_options_token)
-        ws.set_mode(ws.MODE_LTP, symbol)
+        print('onConnect : ',[int(self.option_instrument_token)])
+        ws.set_mode(ws.MODE_LTP, [int(self.option_instrument_token)])
 
     def startBankNiftyAlgo(self,timeInterval):
         
@@ -380,6 +391,7 @@ class BankNifty:
                 # Now fetch access-token from api
                 self.fetchAccessToken()
                 self.doLogin()
+                self.fetchInstrumentToken()
 
                 # push login message to client
                 logString = self.dashedLabel
@@ -521,8 +533,7 @@ class BankNifty:
                 self.saveOrderReport(logString)
 
                 # Fetching instrument id of selected option
-                instrumentList = self.kite.instruments(exchange="NFO")
-                for instrument in instrumentList:
+                for instrument in self.instrumentList:
                     tradingSymbolOptions = str(instrument['tradingsymbol'])
                     if self.current_options_token == tradingSymbolOptions:        
                         self.option_instrument_token = str(instrument['instrument_token'])
@@ -587,13 +598,11 @@ class BankNifty:
                     now = now.astimezone(self.tz)
 
                     if now.minute == EXECUTED_TILL.minute:
-                        symbol = "NFO:{}".format(self.current_options_token)
-                        self.kite_socket.unsubscribe(symbol)
+                        self.kite_socket.unsubscribe([int(self.option_instrument_token)])
                         self.NEED_TO_EXIT_TRADE_LOOP = True
                     else:
                         if self.kite_socket.is_connected():
-                            symbol = "NFO:{}".format(self.current_options_token)
-                            self.kite_socket.set_mode(self.kite_socket.MODE_LTP, symbol)
+                            self.kite_socket.set_mode(self.kite_socket.MODE_LTP, [int(self.option_instrument_token)])
                             
                     tm.sleep(0.5)
 
@@ -601,10 +610,17 @@ class BankNifty:
                 lowLabel = str(round(self.triggerCandleLow,2))
                 emaLabel = str(round(self.triggerCandleEMA5,2))
                 
+                # Send log report to client
                 logString = self.fetchedCandleTime.center(self.spaceGap) + "|" + lowLabel.center(self.spaceGap) + "|" + emaLabel.center(self.spaceGap) + "|" + str(self.isTraded).center(self.spaceGap)
                 self.sendLogReport(logString)
                 logString = self.dashedLabel
                 self.sendLogReport(logString)
+
+                # Save order report
+                logString = 'NO TRADE THIS SESSION'
+                self.saveOrderReport(logString)
+                logString = self.dashedLabel
+                self.saveOrderReport(logString)
             else:
                 # Place Sell Order
                 order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
@@ -616,12 +632,23 @@ class BankNifty:
                                 order_type = 'MARKET',
                                 tag='XCS')
 
+                # Order Placed so send log report to client 
+                lowLabel = str(round(self.triggerCandleLow,2))
+                emaLabel = str(round(self.triggerCandleEMA5,2))
+                
+                logString = self.fetchedCandleTime.center(self.spaceGap) + "|" + lowLabel.center(self.spaceGap) + "|" + emaLabel.center(self.spaceGap) + "|" + str(self.isTraded).center(self.spaceGap)
+                self.sendLogReport(logString)
+                logString = self.dashedLabel
+                self.sendLogReport(logString)
+
+                # Now Save this order report 
                 orderPlacedLabel = 'ORDER_PLACED'
                 orderTypeLable = 'SELL_ORDER'
                 # orderIdLabel = 'SELL_1234'
-                orderIdLabel = order_id
+                orderIdLabel = str(order_id)
 
-                logString = checkTime.center(self.spaceGap) + "|" + str(self.optionLow).center(self.spaceGap) + "|" + str(latestPrice).center(self.spaceGap)+ "|" + str(self.isTraded).center(self.spaceGap)
+                checkTime = '%02d:%02d' % (now.hour,now.minute)
+                logString = checkTime.center(self.spaceGap) + ":" + orderPlacedLabel.center(self.spaceGap) + ":" + orderTypeLable.center(self.spaceGap)+ "|" + orderIdLabel.center(self.spaceGap)
                 self.saveOrderReport(logString)
                 logString = self.dashedLabel
                 self.saveOrderReport(logString)
@@ -646,6 +673,7 @@ class BankNifty:
                 logString = self.dashedLabel
                 self.saveOrderReport(logString)
 
+                # Save this log report
                 timeLabel = 'Time'
                 stoplossLabel = 'StopLossPrice'
                 trargetLabel = 'TargetPrice'
@@ -662,8 +690,7 @@ class BankNifty:
                 # Look for exit position
                 while script_running_staus["is_trade_executed"] :
                     if self.kite_socket.is_connected():
-                        symbol = "NFO:{}".format(self.current_options_token)
-                        self.kite_socket.set_mode(self.kite_socket.MODE_LTP, symbol)
+                        self.kite_socket.set_mode(self.kite_socket.MODE_LTP, [int(self.option_instrument_token)])
 
                     tm.sleep(0.5)
 
