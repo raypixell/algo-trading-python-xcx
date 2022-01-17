@@ -649,10 +649,11 @@ class BankNifty:
                 self.saveOrderReport(logString)
 
                 # Now find out target and stop loss
-                self.stopLossPrice = int(optionHigh)
-                self.targetPrice = (int(optionHigh) - int(self.optionLow))*2
                 stopLoss = int(optionHigh) - int(self.optionLow)
                 target = stopLoss*2 
+                self.stopLossPrice = int(optionHigh)
+                self.targetPrice = int(self.optionLow) - int(target)
+                
 
                 # Now update json file 
                 with open("bank_nifty_script_running_status.json", "r") as jsonFile:
