@@ -36,7 +36,7 @@ class BankNifty:
         print(self.DOWNLOAD_ORDER_REPORT_FILE_NAME)
 
         self.candleInterval = selectedInterval
-        self.no_of_days_for_candle_data = 1
+        self.no_of_days_for_candle_data = 60
         self.quantity = 1
 
         self.from_date = datetime.strftime(now - timedelta(self.no_of_days_for_candle_data),"%Y-%m-%d")
@@ -328,11 +328,11 @@ class BankNifty:
 
                 stopLossHitLabel = 'STOP_LOSS_HIT'
                 orderIdLabel = 'ORDER_ID'
-                # orderIdLabel = 'BUY_1234'
-                orderIdLabel = str(order_id)
+                # orderId = 'BUY_1234'
+                orderId = str(order_id)
 
                 # Save order report
-                logString = stopLossHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderIdLabel).center(self.spaceGap)
+                logString = stopLossHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderId).center(self.spaceGap)
                 self.saveOrderReport(logString)
                 logString = self.dashedLabel
                 self.saveOrderReport(logString)
@@ -361,11 +361,11 @@ class BankNifty:
 
                 targetHitLabel = 'TARGET_HIT'
                 orderIdLabel = 'ORDER_ID'
-                # orderIdLabel = 'BUY_1234'
-                orderIdLabel = str(order_id)
+                # orderId = 'BUY_1234'
+                orderId = str(order_id)
 
                 # Save order report
-                logString = targetHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderIdLabel).center(self.spaceGap)
+                logString = targetHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderId).center(self.spaceGap)
                 self.saveOrderReport(logString)
                 logString = self.dashedLabel
                 self.saveOrderReport(logString)
@@ -644,8 +644,8 @@ class BankNifty:
                 # Now Save this order report 
                 orderPlacedLabel = 'ORDER_PLACED'
                 orderTypeLable = 'SELL_ORDER'
-                # orderIdLabel = 'SELL_1234'
-                orderIdLabel = str(order_id)
+                orderIdLabel = 'SELL_1234'
+                # orderIdLabel = str(order_id)
 
                 checkTime = '%02d:%02d' % (now.hour,now.minute)
                 logString = checkTime.center(self.spaceGap) + ":" + orderPlacedLabel.center(self.spaceGap) + ":" + orderTypeLable.center(self.spaceGap)+ "|" + orderIdLabel.center(self.spaceGap)
