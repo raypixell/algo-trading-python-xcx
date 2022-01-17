@@ -311,69 +311,72 @@ class BankNifty:
             logString = self.dashedLabel
             self.saveOrderReport(logString)
 
+            # Now update json file 
+            with open("bank_nifty_script_running_status.json", "r") as jsonFile:
+                script_running_staus = json.load(jsonFile)
+
             if latestPrice >=self.stopLossPrice:
                 # Stop Loss Hit
+                # Update Script Running Status
+                script_running_staus["is_trade_executed"] = False
+                with open("bank_nifty_script_running_status.json", "w") as jsonFile:
+                    json.dump(script_running_staus, jsonFile)
+
                 # unsubscribe socket
                 self.kite_socket.unsubscribe([int(self.option_instrument_token)])
                 
                 # Place Buy Order
-                order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
-                                exchange =self.option_exchange,
-                                tradingsymbol =self.current_options_token,
-                                transaction_type = self.kite.TRANSACTION_TYPE_BUY,
-                                quantity = self.option_lot_size,
-                                product = 'MIS',
-                                order_type = 'MARKET',
-                                tag='XCS')
+                # order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
+                #                 exchange =self.option_exchange,
+                #                 tradingsymbol =self.current_options_token,
+                #                 transaction_type = self.kite.TRANSACTION_TYPE_BUY,
+                #                 quantity = self.option_lot_size,
+                #                 product = 'MIS',
+                #                 order_type = 'MARKET',
+                #                 tag='XCS')
 
                 stopLossHitLabel = 'STOP_LOSS_HIT'
                 orderIdLabel = 'ORDER_ID'
-                # orderId = 'BUY_1234'
-                orderId = str(order_id)
+                orderId = 'BUY_1234'
+                # orderId = str(order_id)
 
                 # Save order report
                 logString = stopLossHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderId).center(self.spaceGap)
                 self.saveOrderReport(logString)
                 logString = self.dashedLabel
                 self.saveOrderReport(logString)
-                    
+                         
+
+            elif latestPrice <= self.targetPrice :
+                # Target Hit
                 # Update Script Running Status
                 script_running_staus["is_trade_executed"] = False
                 with open("bank_nifty_script_running_status.json", "w") as jsonFile:
                     json.dump(script_running_staus, jsonFile)
 
-                
-
-            elif latestPrice <= self.targetPrice :
-                # Target Hit
                 # unsubscribe socket
                 self.kite_socket.unsubscribe([int(self.option_instrument_token)])
 
                 # Place Buy Order
-                order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
-                                exchange =self.option_exchange,
-                                tradingsymbol =self.current_options_token,
-                                transaction_type = self.kite.TRANSACTION_TYPE_BUY,
-                                quantity = self.option_lot_size,
-                                product = 'MIS',
-                                order_type = 'MARKET',
-                                tag='XCS')
+                # order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
+                #                 exchange =self.option_exchange,
+                #                 tradingsymbol =self.current_options_token,
+                #                 transaction_type = self.kite.TRANSACTION_TYPE_BUY,
+                #                 quantity = self.option_lot_size,
+                #                 product = 'MIS',
+                #                 order_type = 'MARKET',
+                #                 tag='XCS')
 
                 targetHitLabel = 'TARGET_HIT'
                 orderIdLabel = 'ORDER_ID'
-                # orderId = 'BUY_1234'
-                orderId = str(order_id)
+                orderId = 'BUY_1234'
+                # orderId = str(order_id)
 
                 # Save order report
                 logString = targetHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderId).center(self.spaceGap)
                 self.saveOrderReport(logString)
                 logString = self.dashedLabel
                 self.saveOrderReport(logString)
-
-                # Update Script Running Status
-                script_running_staus["is_trade_executed"] = False
-                with open("bank_nifty_script_running_status.json", "w") as jsonFile:
-                    json.dump(script_running_staus, jsonFile)
 
                 
         
@@ -623,23 +626,15 @@ class BankNifty:
                 self.saveOrderReport(logString)
             else:
                 # Place Sell Order
-                order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
-                                exchange =self.option_exchange,
-                                tradingsymbol =self.current_options_token,
-                                transaction_type = self.kite.TRANSACTION_TYPE_SELL,
-                                quantity = self.option_lot_size,
-                                product = 'MIS',
-                                order_type = 'MARKET',
-                                tag='XCS')
+                # order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
+                #                 exchange =self.option_exchange,
+                #                 tradingsymbol =self.current_options_token,
+                #                 transaction_type = self.kite.TRANSACTION_TYPE_SELL,
+                #                 quantity = self.option_lot_size,
+                #                 product = 'MIS',
+                #                 order_type = 'MARKET',
+                #                 tag='XCS')
 
-                # Order Placed so send log report to client 
-                lowLabel = str(round(self.triggerCandleLow,2))
-                emaLabel = str(round(self.triggerCandleEMA5,2))
-                
-                logString = self.fetchedCandleTime.center(self.spaceGap) + "|" + lowLabel.center(self.spaceGap) + "|" + emaLabel.center(self.spaceGap) + "|" + str(self.isTraded).center(self.spaceGap)
-                self.sendLogReport(logString)
-                logString = self.dashedLabel
-                self.sendLogReport(logString)
 
                 # Now Save this order report 
                 orderPlacedLabel = 'ORDER_PLACED'
