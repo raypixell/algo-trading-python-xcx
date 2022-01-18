@@ -315,7 +315,7 @@ class BankNifty:
             with open("bank_nifty_script_running_status.json", "r") as jsonFile:
                 script_running_staus = json.load(jsonFile)
 
-            if latestPrice >=self.stopLossPrice:
+            if latestPrice >=self.stopLossPrice and script_running_staus["is_trade_executed"]:
                 # Stop Loss Hit
                 # Update Script Running Status
                 script_running_staus["is_trade_executed"] = False
@@ -347,7 +347,7 @@ class BankNifty:
                 self.saveOrderReport(logString)
                          
 
-            elif latestPrice <= self.targetPrice :
+            elif latestPrice <= self.targetPrice and script_running_staus["is_trade_executed"]:
                 # Target Hit
                 # Update Script Running Status
                 script_running_staus["is_trade_executed"] = False
@@ -501,7 +501,7 @@ class BankNifty:
                 now = datetime.now()
                 now = now.astimezone(self.tz)
 
-                triggeredTime ='%02d:%02d' % (now.hour,now.minute)
+                triggeredTime =self.fetchedCandleTime
                 triggeredLabel = "TRIGGERED CANDLE FOUND"
                 triggeredSymbol = self.tokens[token]
 
@@ -604,7 +604,7 @@ class BankNifty:
                         self.kite_socket.unsubscribe([int(self.option_instrument_token)])
                         self.NEED_TO_EXIT_TRADE_LOOP = True
                     else:
-                        if self.kite_socket.is_connected():
+                        if self.kite_socket.is_connected() and not self.NEED_TO_EXIT_TRADE_LOOP:
                             self.kite_socket.set_mode(self.kite_socket.MODE_LTP, [int(self.option_instrument_token)])
                             
                     tm.sleep(0.5)
@@ -620,7 +620,8 @@ class BankNifty:
                 self.sendLogReport(logString)
 
                 # Save order report
-                logString = 'NO TRADE THIS SESSION'
+                noTradeLabel = 'NO_TRADE_THIS_SESSION'
+                logString = self.fetchedCandleTime.center(self.spaceGap) + ":" +noTradeLabel.center(self.spaceGap)
                 self.saveOrderReport(logString)
                 logString = self.dashedLabel
                 self.saveOrderReport(logString)
@@ -685,7 +686,11 @@ class BankNifty:
 
                 # Look for exit position
                 while script_running_staus["is_trade_executed"] :
-                    if self.kite_socket.is_connected():
+                    # Now update json file 
+                    with open("bank_nifty_script_running_status.json", "r") as jsonFile:
+                        script_running_staus = json.load(jsonFile)
+
+                    if self.kite_socket.is_connected() and script_running_staus["is_trade_executed"]:
                         self.kite_socket.set_mode(self.kite_socket.MODE_LTP, [int(self.option_instrument_token)])
 
                     tm.sleep(0.5)

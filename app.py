@@ -40,9 +40,9 @@ nifty = None
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abcdefghijklmnopqrstuvwxyzVIKASJHA'
 # Use this for live server
-socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*",async_mode='gevent')
+# socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*",async_mode='gevent')
 # Use this for localhost
-# socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*")
+socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*")
 tz = pytz.timezone('Asia/Kolkata')
 
 @app.route("/", methods=['POST', 'GET'])
