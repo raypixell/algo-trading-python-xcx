@@ -315,68 +315,87 @@ class BankNifty:
             with open("bank_nifty_script_running_status.json", "r") as jsonFile:
                 script_running_staus = json.load(jsonFile)
 
-            if latestPrice >=self.stopLossPrice and script_running_staus["is_trade_executed"]:
-                # Stop Loss Hit
-                # Update Script Running Status
+            if not self.isNowInTimePeriod(time(9,15), time(15,30), now.time()):
+
                 script_running_staus["is_trade_executed"] = False
                 with open("bank_nifty_script_running_status.json", "w") as jsonFile:
                     json.dump(script_running_staus, jsonFile)
 
-                # unsubscribe socket
                 self.kite_socket.unsubscribe([int(self.option_instrument_token)])
+
+                # Save order report
+                logString = 'MARKET CLOSED WITHOUT STOPP LOSS OR TARGET HIT'
+                self.saveOrderReport(logString)
+                logString = self.dashedLabel
+                self.saveOrderReport(logString)
+
+                # Send log message to connected client
+                logString = 'MARKET CLOSED'
+                self.sendLogReport(logString)
+                self.TERMINATE_BANK_NIFTY = True
+                self.socketio.emit('force_stop_bank_nifty_script')
+            else:
+                if latestPrice >=self.stopLossPrice and script_running_staus["is_trade_executed"]:
+                    # Stop Loss Hit
+                    # Update Script Running Status
+                    script_running_staus["is_trade_executed"] = False
+                    with open("bank_nifty_script_running_status.json", "w") as jsonFile:
+                        json.dump(script_running_staus, jsonFile)
+
+                    # unsubscribe socket
+                    self.kite_socket.unsubscribe([int(self.option_instrument_token)])
                 
-                # Place Buy Order
-                # order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
-                #                 exchange =self.option_exchange,
-                #                 tradingsymbol =self.current_options_token,
-                #                 transaction_type = self.kite.TRANSACTION_TYPE_BUY,
-                #                 quantity = self.option_lot_size,
-                #                 product = 'MIS',
-                #                 order_type = 'MARKET',
-                #                 tag='XCS')
+                    # Place Buy Order
+                    # order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
+                    #                 exchange =self.option_exchange,
+                    #                 tradingsymbol =self.current_options_token,
+                    #                 transaction_type = self.kite.TRANSACTION_TYPE_BUY,
+                    #                 quantity = self.option_lot_size,
+                    #                 product = 'MIS',
+                    #                 order_type = 'MARKET',
+                    #                 tag='XCS')
 
-                stopLossHitLabel = 'STOP_LOSS_HIT'
-                orderIdLabel = 'ORDER_ID'
-                orderId = 'BUY_1234'
-                # orderId = str(order_id)
+                    stopLossHitLabel = 'STOP_LOSS_HIT'
+                    orderIdLabel = 'ORDER_ID'
+                    orderId = 'BUY_1234'
+                    # orderId = str(order_id)
 
-                # Save order report
-                logString = stopLossHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderId).center(self.spaceGap)
-                self.saveOrderReport(logString)
-                logString = self.dashedLabel
-                self.saveOrderReport(logString)
-                         
+                    # Save order report
+                    logString = stopLossHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderId).center(self.spaceGap)
+                    self.saveOrderReport(logString)
+                    logString = self.dashedLabel
+                    self.saveOrderReport(logString)          
 
-            elif latestPrice <= self.targetPrice and script_running_staus["is_trade_executed"]:
-                # Target Hit
-                # Update Script Running Status
-                script_running_staus["is_trade_executed"] = False
-                with open("bank_nifty_script_running_status.json", "w") as jsonFile:
-                    json.dump(script_running_staus, jsonFile)
+                elif latestPrice <= self.targetPrice and script_running_staus["is_trade_executed"]:
+                    # Target Hit
+                    # Update Script Running Status
+                    script_running_staus["is_trade_executed"] = False
+                    with open("bank_nifty_script_running_status.json", "w") as jsonFile:
+                        json.dump(script_running_staus, jsonFile)
 
-                # unsubscribe socket
-                self.kite_socket.unsubscribe([int(self.option_instrument_token)])
+                    # unsubscribe socket
+                    self.kite_socket.unsubscribe([int(self.option_instrument_token)])
 
-                # Place Buy Order
-                # order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
-                #                 exchange =self.option_exchange,
-                #                 tradingsymbol =self.current_options_token,
-                #                 transaction_type = self.kite.TRANSACTION_TYPE_BUY,
-                #                 quantity = self.option_lot_size,
-                #                 product = 'MIS',
-                #                 order_type = 'MARKET',
-                #                 tag='XCS')
+                    # Place Buy Order
+                    # order_id = self.kite.place_order(variety=self.kite.VARIETY_REGULAR,
+                    #                 exchange =self.option_exchange,
+                    #                 tradingsymbol =self.current_options_token,
+                    #                 transaction_type = self.kite.TRANSACTION_TYPE_BUY,
+                    #                 quantity = self.option_lot_size,
+                    #                 product = 'MIS',
+                    #                 order_type = 'MARKET',
+                    #                 tag='XCS')
 
-                targetHitLabel = 'TARGET_HIT'
-                orderIdLabel = 'ORDER_ID'
-                orderId = 'BUY_1234'
-                # orderId = str(order_id)
+                    targetHitLabel = 'TARGET_HIT'
+                    orderIdLabel = 'ORDER_ID'
+                    orderId = 'BUY_1234'
+                    # orderId = str(order_id)
 
-                # Save order report
-                logString = targetHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderId).center(self.spaceGap)
-                self.saveOrderReport(logString)
-                logString = self.dashedLabel
-                self.saveOrderReport(logString)
+                    # Save order report
+                    logString = targetHitLabel.center(self.spaceGap) + ":" + orderIdLabel.center(self.spaceGap) + "|" + str(orderId).center(self.spaceGap)
+                    self.saveOrderReport(logString)
+                    logString = self.dashedLabel
+                    self.saveOrderReport(logString)
 
                 
         

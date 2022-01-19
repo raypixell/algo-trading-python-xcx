@@ -9,7 +9,7 @@ import os
 
 tz = pytz.timezone('Asia/Kolkata')
 api_key = '9fua69n6l7whujs5'
-access_token = '9JR10GlUbTcKSzEhrEz43laWdhwWysUW'
+access_token = 'VvhwGbcOkNilmXtT6lF1TBQQumNllhG8'
 
 kite = KiteConnect(api_key=api_key,timeout=20)
 kite.set_access_token(access_token)
