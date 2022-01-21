@@ -7,163 +7,106 @@ import json
 import pytz
 import os
 
-tz = pytz.timezone('Asia/Kolkata')
-api_key = '9fua69n6l7whujs5'
-access_token = 'VvhwGbcOkNilmXtT6lF1TBQQumNllhG8'
+class KiteTickerTest :
 
-kite = KiteConnect(api_key=api_key,timeout=20)
-kite.set_access_token(access_token)
+    def __init__(self):
+        self.tz = pytz.timezone('Asia/Kolkata')
+        self.api_key = '9fua69n6l7whujs5'
+        self.access_token = 'yi0uJYTBKozTo1K11uSILe55BGL1EapT'
 
-kws = KiteTicker(api_key, access_token)
+        self.kite = KiteConnect(api_key=self.api_key,timeout=20)
+        self.kite.set_access_token(self.access_token)
 
-now = datetime.now()
-now = now.astimezone(tz)
-# today = now.day
-
-# month = calendar.monthcalendar(now.year, now.month)
-
-# for week in month:
-      
-#     if today in week:     
-#         saturday = week[calendar.SATURDAY]
-#         sunday = week[calendar.SUNDAY]
-#         print('today : ',today,'saturday : ',saturday,'sunday : ' , sunday)
-
-#         if today == saturday or today == sunday:
-#             print('MARKET CLOSED')
-#         else:
-#             print('TRADING DAY')
-#             if now.hour==15:
-#                 if now.minute>30:
-#                     print('MARKET CLOSED')
-#             else:
-#                 if now.hour >= 16:
-#                     print('MARKET CLOSED
-# newDate = '%02d-%b-%02d' % (now.day,now.month,now.year)
-# executedTill = now + timedelta(minutes=5)
-# NEED_TO_EXIT_TRADE_LOOP = False
-# while not NEED_TO_EXIT_TRADE_LOOP:
-#     now = datetime.now()
-#     now = now.astimezone(tz)
-                    
-#     if now.minute == executedTill.minute :
-#         NEED_TO_EXIT_TRADE_LOOP = True
+        self.kws = KiteTicker(self.api_key, self.access_token)
         
-#     print('Now : {}'.format(now.minute))
-#     print('Executed Till : {}'.format(executedTill.minute))
-# -------------------------------------------------------------------------------------
-# go 5 minutes into the future
 
-def on_ticks(ws,ticks):
+        self.NEED_TO_EXIT_TRADE_LOOP = None
+
+    def on_connect(self,ws,response):
+        if not self.NEED_TO_EXIT_TRADE_LOOP:
+            print('onConnect : ',[256265])
+            ws.subscribe([256265])
+            ws.set_mode(ws.MODE_LTP, [256265])
+        else:
+            print('Handle on_connect : No Need To Start')
+
+
+    def Test1(self,ws,ticks):
+        self.computeTest1(ws,ticks)  
+
+    def computeTest1(self,ws,ticks):
+        now = datetime.now()
+        now = now.astimezone(self.tz)
+
+        if len(ticks)>0:
+            latestPrice = ticks[0]['last_price']
+            print('LTP TEST1 : {}'.format(latestPrice))
+
+        if now.minute % 5 == 0:
+            self.NEED_TO_EXIT_TRADE_LOOP = True
+            print('Web Socket Stopped at : ' , now.hour,':',now.minute)
+            ws.unsubscribe([256265])
+
+
+    def Test2(self,ws,ticks):
+        self.computeTest2(ws,ticks)
+
+    def computeTest2(self,ws,ticks):
+        now = datetime.now()
+        now = now.astimezone(self.tz)
+
+        if len(ticks)>0:
+            latestPrice = ticks[0]['last_price']
+            print('LTP TEST2 : {}'.format(latestPrice))
+
+        if now.minute % 5 == 0:
+            self.NEED_TO_EXIT_TRADE_LOOP = True
+            print('Web Socket Stopped at : ' , now.hour,':',now.minute)
+            ws.unsubscribe([256265])
+
+    def startLoop(self):
+        while True:
+            now = datetime.now()
+            now = now.astimezone(self.tz)
+
+            if now.minute % 2 == 0 and not now.minute % 5 == 0:
+                self.startTicker()
+
+    def startTicker(self):
+        self.kws.on_ticks = self.Test1
+
+        try:
+            if not self.kws.is_connected():
+                self.kws.on_connect = self.on_connect
+                self.kws.connect(threaded=True)
+        except Exception as e :
+            print(e)
+            self.kws.on_connect = self.on_connect
+            self.kws.connect(threaded=True)
+
+        self.NEED_TO_EXIT_TRADE_LOOP = False
+
+        while not self.NEED_TO_EXIT_TRADE_LOOP :
+            if self.kws.is_connected():
+                self.kws.set_mode(self.kws.MODE_LTP, [256265])
     
-    now = datetime.now()
-    now = now.astimezone(tz)
+            tm.sleep(0.5)
 
-    # Now update json file 
-    with open("bank_nifty_script_running_status.json", "r") as jsonFile:
-        script_running_staus = json.load(jsonFile)
+        self.NEED_TO_EXIT_TRADE_LOOP = False
+        print('Now Sleeping for 60s')
+        tm.sleep(60)
+        print('Starting Socket ')
+        self.kws.on_ticks = self.Test2
 
-    if now.minute == next5min.minute and script_running_staus["is_trade_executed"]:
-        print("Loop Exit At : ",now.minute , now.second)
-        kws.unsubscribe([260105])
-
-        # Update Script Running Status
-        script_running_staus["is_trade_executed"] = False
-        with open("bank_nifty_script_running_status.json", "w") as jsonFile:
-            json.dump(script_running_staus, jsonFile)
-    else:
-        print('LTP 1 : {}'.format(ticks[0]['last_price']))
-        
-
-def on_ticks_2(ws,ticks):
-    now = datetime.now()
-    now = now.astimezone(tz)
-
-    # Now update json file 
-    with open("bank_nifty_script_running_status.json", "r") as jsonFile:
-        script_running_staus = json.load(jsonFile)
-
-    if now.minute == next5min.minute and script_running_staus["is_trade_executed"]:
-        print("Loop Exit At : ",now.minute , now.second)
-        kws.unsubscribe([260105])
-
-        # Update Script Running Status
-        script_running_staus["is_trade_executed"] = False
-        with open("bank_nifty_script_running_status.json", "w") as jsonFile:
-            json.dump(script_running_staus, jsonFile)
-    else:
-        print('LTP 2 : {}'.format(ticks[0]['last_price']))
-        
-
-def on_connect(ws,response):
-    ws.set_mode(ws.MODE_LTP, [260105])
-
-interval = 5
-now = datetime.now()
-now = now.astimezone(tz)
-
-later5min = now + timedelta(0,0,0,0,int(interval))
-# round to 5 minutes
-next5min = datetime(later5min.year, later5min.month, later5min.day, later5min.hour, int(interval)*int(later5min.minute/int(interval)), 0, 0)
-print("Next 5 Min : ",next5min.hour,":",next5min.minute)
-
-# Now update json file 
-with open("bank_nifty_script_running_status.json", "r") as jsonFile:
-    script_running_staus = json.load(jsonFile)
-
-# Update Script Running Status
-script_running_staus["is_trade_executed"] = True
-with open("bank_nifty_script_running_status.json", "w") as jsonFile:
-    json.dump(script_running_staus, jsonFile)
-
-kws.on_ticks = on_ticks
-kws.on_connect = on_connect
-kws.connect(threaded=True)
-
-while script_running_staus["is_trade_executed"]:
-    # Now update json file 
-    with open("bank_nifty_script_running_status.json", "r") as jsonFile:
-        script_running_staus = json.load(jsonFile)
-
-    if kws.is_connected() and script_running_staus["is_trade_executed"]:
-        kws.set_mode(kws.MODE_LTP, [260105])
-        
-    tm.sleep(0.5)
-
-tm.sleep(60)
-
-kws.on_ticks = on_ticks_2
- 
-interval = 5
-now = datetime.now()
-now = now.astimezone(tz)
-
-later5min = now + timedelta(0,0,0,0,int(interval))
-# round to 5 minutes
-next5min = datetime(later5min.year, later5min.month, later5min.day, later5min.hour, int(interval)*int(later5min.minute/int(interval)), 0, 0)
-print("Next 5 Min : ",next5min.hour,":",next5min.minute)
-
-# Update Script Running Status
-script_running_staus["is_trade_executed"] = True
-with open("bank_nifty_script_running_status.json", "w") as jsonFile:
-    json.dump(script_running_staus, jsonFile)
-
-while script_running_staus["is_trade_executed"]:
-
-    # Now update json file 
-    with open("bank_nifty_script_running_status.json", "r") as jsonFile:
-        script_running_staus = json.load(jsonFile)
-
-    if kws.is_connected() and script_running_staus["is_trade_executed"]:
-        kws.set_mode(kws.MODE_LTP, [260105])
+        while not self.NEED_TO_EXIT_TRADE_LOOP :
+            if self.kws.is_connected():
+                self.kws.set_mode(self.kws.MODE_LTP, [256265])
     
-    tm.sleep(0.5)
+            tm.sleep(0.5)
 
 
-
-
-
-
-
+if __name__ == '__main__':
+    kiteTest = KiteTickerTest()
+    kiteTest.startLoop()
 
             

@@ -269,7 +269,6 @@ class BankNifty:
                 # Stop Checking
                 self.NEED_TO_EXIT_TRADE_LOOP = True
                 self.kite_socket.unsubscribe([int(self.option_instrument_token)])
-                self.NEED_TO_EXIT_TRADE_LOOP = True
                 self.isTraded = True
 
                 lowLabel = str(round(self.triggerCandleLow,2))
@@ -324,7 +323,7 @@ class BankNifty:
                 self.kite_socket.unsubscribe([int(self.option_instrument_token)])
 
                 # Save order report
-                logString = 'MARKET CLOSED WITHOUT STOPP LOSS OR TARGET HIT'
+                logString = 'MARKET CLOSED WITHOUT STOP LOSS OR TARGET HIT'
                 self.saveOrderReport(logString)
                 logString = self.dashedLabel
                 self.saveOrderReport(logString)
@@ -400,8 +399,15 @@ class BankNifty:
                 
         
     def on_connect(self,ws,response):
-        print('onConnect : ',[int(self.option_instrument_token)])
-        ws.set_mode(ws.MODE_LTP, [int(self.option_instrument_token)])
+        # Now update json file 
+        with open("bank_nifty_script_running_status.json", "r") as jsonFile:
+            script_running_staus = json.load(jsonFile)
+
+        if not self.NEED_TO_EXIT_TRADE_LOOP or script_running_staus["is_trade_executed"]:
+            print('onConnect : ',[int(self.option_instrument_token)])
+            ws.set_mode(ws.MODE_LTP, [int(self.option_instrument_token)])
+        else:
+            print('onConnect : ','NO NEED TO START')
 
     def startBankNiftyAlgo(self,timeInterval):
         
@@ -673,6 +679,9 @@ class BankNifty:
                 target = stopLoss*2 
                 self.stopLossPrice = int(optionHigh)
                 self.targetPrice = int(self.optionLow) - int(target)
+
+                if self.targetPrice <=0 :
+                    self.targetPrice = 1
                 
 
                 # Now update json file 

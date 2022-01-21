@@ -40,9 +40,9 @@ nifty = None
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abcdefghijklmnopqrstuvwxyzVIKASJHA'
 # Use this for live server
-socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*",async_mode='gevent')
+# socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*",async_mode='gevent')
 # Use this for localhost
-# socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*")
+socketio = SocketIO(app,logger=True, engineio_logger=True, cors_allowed_origins="*")
 tz = pytz.timezone('Asia/Kolkata')
 
 @app.route("/", methods=['POST', 'GET'])
@@ -95,6 +95,18 @@ def onConnected(msg):
 
             # Update Start Stop Btn State
             socketio.emit('update_btn_state_nifty',script_running_staus)
+
+        now = datetime.now()
+        now = now.astimezone(tz)
+        bank_nifty_log_file_name = "nifty_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
+
+        if os.path.exists(bank_nifty_log_file_name):
+            with open(bank_nifty_log_file_name, "r") as txtFile:
+                for line in txtFile:
+                    line = line.strip()
+                    print('line : ' , line)
+                    logMessage = {"logReport" : line}
+                    socketio.emit('log_report_nifty',logMessage)
     
     elif msg['page'] == 3:
         # Connected to Bank Nifty Page
@@ -523,6 +535,15 @@ def download(selectedCommodities):
             return send_file(bank_nifty_order_report, as_attachment=True)
         else:
             return "No order report found for Bank Nifty."
+    elif selectedCommodities == 8:
+        now = datetime.now()
+        now = now.astimezone(tz)
+        nifty_order_report = "nifty_order_report_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
+        
+        if os.path.exists(nifty_order_report):
+            return send_file(nifty_order_report, as_attachment=True)
+        else:
+            return "No order report found for Nifty."
 
 @app.route("/save_access_token")
 def save_access_token():
@@ -737,19 +758,19 @@ def stop_nifty_script(data):
         
         now = datetime.now()
         now = now.astimezone(tz)
-        currentTime ='%02d-%02d-%02d  %02d:%02d' % (now.day,now.month,now.year,now.hour,now.minute)
+        currentTime = datetime.strftime(now, '%I : %M %p')
         nifty_log_file_name = "nifty_" + '%02d-%02d-%02d.txt' % (now.day,now.month,now.year)
 
         # open file stream
         f=open(nifty_log_file_name, "a+")
 
-        logString = 'Script Stopped! at : ' + str(currentTime)
+        logString = 'SCRIPT STOPPED AT : {}'.format(currentTime)
         f.write('\n'+logString)
 
         logMessage = {"logReport" : logString}
         socketio.emit('log_report_nifty',logMessage)
         
-        logString = '---------------------------'
+        logString = '---------------------------------------------------------------------------------------------------'
         f.write('\n'+logString)
 
         logMessage = {"logReport" : logString}
